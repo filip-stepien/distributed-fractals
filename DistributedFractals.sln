@@ -1,0 +1,22 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedFractals.Gui", "DistributedFractals.Gui\DistributedFractals.Gui.csproj", "{46CAF4D5-D418-43B9-9982-34524BE2CBBE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedFractals.Core", "DistributedFractals.Core\DistributedFractals.Core.csproj", "{21F829C7-5464-47ED-8194-A16E2C32D0CB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{46CAF4D5-D418-43B9-9982-34524BE2CBBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46CAF4D5-D418-43B9-9982-34524BE2CBBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46CAF4D5-D418-43B9-9982-34524BE2CBBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46CAF4D5-D418-43B9-9982-34524BE2CBBE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21F829C7-5464-47ED-8194-A16E2C32D0CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21F829C7-5464-47ED-8194-A16E2C32D0CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21F829C7-5464-47ED-8194-A16E2C32D0CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21F829C7-5464-47ED-8194-A16E2C32D0CB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
