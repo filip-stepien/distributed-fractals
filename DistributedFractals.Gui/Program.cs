@@ -1,11 +1,17 @@
+using Avalonia;
+
 namespace DistributedFractals.Gui;
 
 static class Program
 {
     [STAThread]
-    static void Main()
+    static void Main(string[] args)
     {
-        ApplicationConfiguration.Initialize();
-        Application.Run(new Form1());
+        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
+
+    public static AppBuilder BuildAvaloniaApp()
+        => AppBuilder.Configure<App>()
+            .UsePlatformDetect()
+            .LogToTrace();
 }
