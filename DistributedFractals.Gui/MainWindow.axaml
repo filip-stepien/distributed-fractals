@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DistributedFractals.Gui.MainWindow"
+        Title="Distributed Fractals"
+        Width="900" Height="700">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8" Spacing="8">
+            <TextBlock VerticalAlignment="Center" Text="Max Iterations:" />
+            <NumericUpDown x:Name="MaxIterationsInput" Value="1000" Minimum="10" Maximum="100000" Increment="100" Width="150" />
+            <Button x:Name="GenerateButton" Content="Generate" Click="OnGenerateClick" />
+        </StackPanel>
+        <Image x:Name="FractalImage" Stretch="Uniform" />
+    </DockPanel>
+</Window>

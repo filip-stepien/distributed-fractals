@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using Avalonia.Controls;
-using Avalonia.Layout;
+using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using DistributedFractals.Core.Colorizers;
 using DistributedFractals.Core.Core;
@@ -8,67 +8,23 @@ using DistributedFractals.Core.Generators.Mandelbrot;
 
 namespace DistributedFractals.Gui;
 
-public class MainWindow : Window
+public partial class MainWindow : Window
 {
-    private readonly NumericUpDown _maxIterationsInput;
-    private readonly Button _generateButton;
-    private readonly Image _fractalImage;
-
     public MainWindow()
     {
-        Title = "Distributed Fractals";
-        Width = 900;
-        Height = 700;
-
-        _maxIterationsInput = new NumericUpDown
-        {
-            Value = 1000,
-            Minimum = 10,
-            Maximum = 100000,
-            Increment = 100,
-            Width = 150
-        };
-
-        _generateButton = new Button { Content = "Generate" };
-        _generateButton.Click += OnGenerateClick;
-
-        _fractalImage = new Image { Stretch = Avalonia.Media.Stretch.Uniform };
-
-        var toolbar = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Margin = new Avalonia.Thickness(8),
-            Spacing = 8,
-            Children =
-            {
-                new TextBlock
-                {
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Text = "Max Iterations:"
-                },
-                _maxIterationsInput,
-                _generateButton
-            }
-        };
-
-        DockPanel.SetDock(toolbar, Dock.Top);
-
-        Content = new DockPanel
-        {
-            Children = { toolbar, _fractalImage }
-        };
+        InitializeComponent();
     }
 
-    private async void OnGenerateClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private async void OnGenerateClick(object? sender, RoutedEventArgs e)
     {
-        _generateButton.IsEnabled = false;
-        _generateButton.Content = "Generating...";
+        GenerateButton.IsEnabled = false;
+        GenerateButton.Content = "Generating...";
 
         try
         {
             int width = 800;
             int height = 600;
-            ulong maxIterations = (ulong)(_maxIterationsInput.Value ?? 1000);
+            ulong maxIterations = (ulong)(MaxIterationsInput.Value ?? 1000);
 
             var options = new MandelbrotOptions(
                 Width: (ulong)width,
@@ -111,12 +67,12 @@ public class MainWindow : Window
                 }
             }
 
-            _fractalImage.Source = bitmap;
+            FractalImage.Source = bitmap;
         }
         finally
         {
-            _generateButton.IsEnabled = true;
-            _generateButton.Content = "Generate";
+            GenerateButton.IsEnabled = true;
+            GenerateButton.Content = "Generate";
         }
     }
 }

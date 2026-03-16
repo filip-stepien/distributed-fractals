@@ -1,14 +1,14 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Themes.Fluent;
+using Avalonia.Markup.Xaml;
 
 namespace DistributedFractals.Gui;
 
-public class App : Application
+public partial class App : Application
 {
     public override void Initialize()
     {
-        Styles.Add(new FluentTheme());
+        AvaloniaXamlLoader.Load(this);
     }
 
     public override void OnFrameworkInitializationCompleted()
