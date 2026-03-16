@@ -1,4 +1,4 @@
-using System.Drawing;
+using SkiaSharp;
 using DistributedFractals.Core.Colorizers;
 using DistributedFractals.Core.Core;
 using DistributedFractals.Core.Generators.Mandelbrot;
@@ -15,15 +15,20 @@ var colorizer = new BlackAndWhiteColorizer();
 FractalResult result = generator.Generate(options, colorizer);
 
 // DEBUG: save to bitmap
-var bitmap = new Bitmap((int)result.Width, (int)result.Height);
+using var bitmap = new SKBitmap((int)result.Width, (int)result.Height);
 foreach (FractalPoint point in result.FractalPoints)
 {
     int r = (int)(point.Color.X * 255);
     int g = (int)(point.Color.Y * 255);
     int b = (int)(point.Color.Z * 255);
-    bitmap.SetPixel((int)point.Coordinates.X, (int)point.Coordinates.Y, Color.FromArgb(r, g, b));
+    bitmap.SetPixel((int)point.Coordinates.X, (int)point.Coordinates.Y, new SKColor((byte)r, (byte)g, (byte)b));
 }
 
 string outputPath = "mandelbrot.png";
-bitmap.Save(outputPath);
+using (var image = SKImage.FromBitmap(bitmap))
+using (var data = image.Encode(SKEncodedImageFormat.Png, 100))
+using (var stream = File.OpenWrite(outputPath))
+{
+    data.SaveTo(stream);
+}
 Console.WriteLine($"Saved to {Path.GetFullPath(outputPath)}");
