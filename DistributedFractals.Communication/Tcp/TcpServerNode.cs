@@ -84,7 +84,7 @@ public class TcpServerNode(IPAddress listenAddress, int port) : IMessageNode
         }
     }
     
-    public Task StartAsync()
+    public Task ConnectAsync()
     {
         if (_listener != null)
         {
@@ -100,7 +100,7 @@ public class TcpServerNode(IPAddress listenAddress, int port) : IMessageNode
         return Task.CompletedTask;
     }
 
-    public Task StopAsync()
+    public ValueTask DisposeAsync()
     {
         _cts?.Cancel();
 
@@ -114,7 +114,7 @@ public class TcpServerNode(IPAddress listenAddress, int port) : IMessageNode
         _listener?.Stop();
         _listener = null;
 
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     public async Task SendAsync(Message message)

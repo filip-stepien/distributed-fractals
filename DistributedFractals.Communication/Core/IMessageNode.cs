@@ -1,12 +1,11 @@
 ﻿namespace DistributedFractals.Server.Core;
 
-public interface IMessageNode
+public interface IMessageNode : IAsyncDisposable
 {
     public MessageNodeIdentifier Identifier { get; }
-    
+
     event Action<Message>? MessageReceived;
 
-    Task StartAsync();
-    Task StopAsync();
+    Task ConnectAsync();
     Task SendAsync(Message message);
 }
