@@ -1,5 +1,4 @@
 using System.Net;
-using DistributedFractals.Server;
 using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Tcp;
 
@@ -19,9 +18,9 @@ master.MessageReceived += async message =>
     ));
 };
 
-await master.StartAsync();
+await master.ConnectAsync();
 
 Console.WriteLine("Master is running. Press Enter to stop.");
 Console.ReadLine();
 
-await master.StopAsync();
+await master.DisposeAsync();

@@ -14,7 +14,7 @@ public class TcpClientNode(IPAddress serverAddress, int port) : IMessageNode
     private TcpClient? _client;
     private CancellationTokenSource? _cts;
 
-    public async Task StartAsync()
+    public async Task ConnectAsync()
     {
         if (_client is not null)
         {
@@ -29,13 +29,13 @@ public class TcpClientNode(IPAddress serverAddress, int port) : IMessageNode
         _ = ReceiveLoopAsync(_cts.Token);
     }
 
-    public Task StopAsync()
+    public ValueTask DisposeAsync()
     {
         _cts?.Cancel();
         _client?.Close();
         _client = null;
 
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     public async Task SendAsync(Message message)
