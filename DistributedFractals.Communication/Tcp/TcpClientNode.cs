@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
@@ -6,10 +6,10 @@ using DistributedFractals.Server.Core;
 
 namespace DistributedFractals.Server.Tcp;
 
-public class TcpClientNode(IPAddress serverAddress, int port) : IMessageNode
+public class TcpClientNode(IPAddress serverAddress, int port) : IMessageWorkerNode
 {
     public MessageNodeIdentifier Identifier { get; } = new();
-    public event Action<Message>? MessageReceived;
+    public event Action<MasterNodeMessage>? MessageReceived;
 
     private TcpClient? _client;
     private CancellationTokenSource? _cts;
@@ -38,11 +38,11 @@ public class TcpClientNode(IPAddress serverAddress, int port) : IMessageNode
         return ValueTask.CompletedTask;
     }
 
-    public async Task SendAsync(Message message)
+    public async Task SendToMaster(WorkerNodeMessage message)
     {
         if (_client is null)
         {
-            throw new InvalidOperationException("Client is not started.");
+            throw new InvalidOperationException("Client is not connected.");
         }
 
         NetworkStream stream = _client.GetStream();
@@ -75,7 +75,7 @@ public class TcpClientNode(IPAddress serverAddress, int port) : IMessageNode
                 }
 
                 string json = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                Message? message = JsonSerializer.Deserialize<Message>(json);
+                MasterNodeMessage? message = JsonSerializer.Deserialize<MasterNodeMessage>(json);
 
                 if (message is not null)
                 {

@@ -5,12 +5,12 @@ namespace DistributedFractals.Server.Tcp;
 
 public class TcpMessageNodeFactory(IPAddress address, int port) : IMessageNodeFactory
 {
-    public IMessageNode CreateMaster()
+    public IMessageMasterNode CreateMaster()
     {
         return new TcpServerNode(address, port);
     }
 
-    public IMessageNode CreateWorker()
+    public IMessageWorkerNode CreateWorker()
     {
         return new TcpClientNode(address, port);
     }

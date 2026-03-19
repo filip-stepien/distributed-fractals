@@ -1,7 +1,6 @@
 ﻿namespace DistributedFractals.Server.Core;
 
-public sealed record Message(
+public sealed record WorkerNodeMessage(
     MessageNodeIdentifier Sender,
-    MessageNodeIdentifier Receiver,
     string Content
 );
