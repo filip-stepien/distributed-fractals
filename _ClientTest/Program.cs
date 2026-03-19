@@ -3,22 +3,22 @@ using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Tcp;
 
 IMessageNodeFactory factory = new TcpMessageNodeFactory(IPAddress.Loopback, 3000);
-await using IMessageNode worker = factory.CreateWorker();
+await using IMessageWorkerNode worker = factory.CreateWorker();
 
-worker.Identifier.DisplayName = "worker";
+worker.Identifier.DisplayName = "worker-1";
 
 worker.MessageReceived += message =>
 {
-    Console.WriteLine($"[WORKER] Od {message.Sender.DisplayName}: {message.Content}");
+    Console.WriteLine($"[WORKER] Od mastera: {message.Content}");
 };
 
 await worker.ConnectAsync();
 
-await worker.SendAsync(new Message(
+await worker.SendToMaster(new WorkerNodeMessage(
     worker.Identifier,
-    MessageNodeIdentifier.Master,
-    "Hello World!"
+    "Hello from worker!"
 ));
 
 Console.WriteLine("Press Enter to stop.");
 Console.ReadLine();
+

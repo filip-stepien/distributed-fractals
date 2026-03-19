@@ -15,10 +15,6 @@ public sealed record MessageNodeIdentifier
         Id = id;
     }
 
-    public static MessageNodeIdentifier All { get; } = new("all");
-    
-    public static MessageNodeIdentifier Master { get; } = new("master");
-
     public static MessageNodeIdentifier From(string id)
     {
         if (string.IsNullOrWhiteSpace(id))
