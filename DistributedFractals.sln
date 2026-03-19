@@ -6,6 +6,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedFractals.Core", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedFractals.Console", "DistributedFractals.Console\DistributedFractals.Console.csproj", "{C483BDC7-820A-4D37-A903-1658404AF05F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedFractals.Communication", "DistributedFractals.Communication\DistributedFractals.Communication.csproj", "{21294902-B610-4BA6-88A8-ABB0C1359344}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_ClientTest", "_ClientTest\_ClientTest.csproj", "{C6FA3FD2-0DD5-4B25-9B3F-8F325ABC3B46}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_ServerTest", "_ServerTest\_ServerTest.csproj", "{2624CC32-9D83-46CC-A7D7-0832A48CCC9F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +30,17 @@ Global
 		{C483BDC7-820A-4D37-A903-1658404AF05F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C483BDC7-820A-4D37-A903-1658404AF05F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C483BDC7-820A-4D37-A903-1658404AF05F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21294902-B610-4BA6-88A8-ABB0C1359344}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21294902-B610-4BA6-88A8-ABB0C1359344}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21294902-B610-4BA6-88A8-ABB0C1359344}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21294902-B610-4BA6-88A8-ABB0C1359344}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6FA3FD2-0DD5-4B25-9B3F-8F325ABC3B46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6FA3FD2-0DD5-4B25-9B3F-8F325ABC3B46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6FA3FD2-0DD5-4B25-9B3F-8F325ABC3B46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6FA3FD2-0DD5-4B25-9B3F-8F325ABC3B46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2624CC32-9D83-46CC-A7D7-0832A48CCC9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2624CC32-9D83-46CC-A7D7-0832A48CCC9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2624CC32-9D83-46CC-A7D7-0832A48CCC9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2624CC32-9D83-46CC-A7D7-0832A48CCC9F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
