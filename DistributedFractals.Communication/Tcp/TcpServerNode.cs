@@ -10,7 +10,7 @@ public class TcpServerNode(IPAddress listenAddress, int port, ISerializer messag
 {
     public event Action<WorkerNodeMessage>? MessageReceived;
 
-    private readonly ConcurrentDictionary<string, TcpClient> _clients = new();
+    private readonly ConcurrentDictionary<string, TcpStream> _clients = new();
     private TcpListener? _listener;
     private CancellationTokenSource? _cts;
 
@@ -33,12 +33,6 @@ public class TcpServerNode(IPAddress listenAddress, int port, ISerializer messag
     public ValueTask DisposeAsync()
     {
         _cts?.Cancel();
-
-        foreach (TcpClient client in _clients.Values)
-        {
-            client.Close();
-        }
-
         _clients.Clear();
         _listener?.Stop();
         _listener = null;
@@ -48,20 +42,20 @@ public class TcpServerNode(IPAddress listenAddress, int port, ISerializer messag
 
     public async Task SendToWorker(MessageNodeIdentifier workerIdentifier, MasterNodeMessage message)
     {
-        if (!_clients.TryGetValue(workerIdentifier.Id, out TcpClient? client))
+        if (!_clients.TryGetValue(workerIdentifier.Id, out TcpStream? stream))
         {
             return;
         }
-        
-        await client.GetStream().WriteAsync(messageSerializer.Serialize(message));
+
+        await stream.WriteAsync(messageSerializer.Serialize(message));
     }
 
     public async Task BroadcastToWorkers(MasterNodeMessage message)
     {
-        foreach (TcpClient client in _clients.Values)
+        ReadOnlyMemory<byte> data = messageSerializer.Serialize(message);
+        foreach (TcpStream stream in _clients.Values)
         {
-            NetworkStream stream = client.GetStream();
-            await stream.WriteAsync(messageSerializer.Serialize(message));
+            await stream.WriteAsync(data);
         }
     }
 
@@ -75,24 +69,22 @@ public class TcpServerNode(IPAddress listenAddress, int port, ISerializer messag
         while (!cancellationToken.IsCancellationRequested)
         {
             TcpClient client = await _listener.AcceptTcpClientAsync(cancellationToken);
-            _ = ReceiveLoopAsync(client, cancellationToken);
+            TcpStream stream = new(client.GetStream());
+            _ = ReceiveLoopAsync(stream, cancellationToken);
         }
     }
 
-    private async Task ReceiveLoopAsync(TcpClient client, CancellationToken cancellationToken)
+    private async Task ReceiveLoopAsync(TcpStream stream, CancellationToken cancellationToken)
     {
-        byte[] buffer = new byte[4096];
         string? workerId = null;
-        NetworkStream stream = client.GetStream();
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            int bytesRead = await stream.ReadAsync(buffer, cancellationToken);
-            Memory<byte> serializedMessage = buffer.AsMemory(0, bytesRead);
-            WorkerNodeMessage message = messageSerializer.Deserialize<WorkerNodeMessage>(serializedMessage);
+            Memory<byte> data = await stream.ReadAsync(cancellationToken);
+            WorkerNodeMessage message = messageSerializer.Deserialize<WorkerNodeMessage>(data);
 
             workerId ??= message.Sender.Id;
-            _clients[workerId] = client;
+            _clients[workerId] = stream;
 
             MessageReceived?.Invoke(message);
         }

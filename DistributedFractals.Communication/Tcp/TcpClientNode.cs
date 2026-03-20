@@ -7,10 +7,10 @@ namespace DistributedFractals.Server.Tcp;
 
 public class TcpClientNode(IPAddress serverAddress, int port, ISerializer messageSerializer) : IMessageWorkerNode
 {
-    
     public MessageNodeIdentifier Identifier { get; } = new();
     public event Action<MasterNodeMessage>? MessageReceived;
 
+    private TcpStream? _stream;
     private TcpClient? _client;
     private CancellationTokenSource? _cts;
 
@@ -26,6 +26,7 @@ public class TcpClientNode(IPAddress serverAddress, int port, ISerializer messag
 
         await _client.ConnectAsync(serverAddress, port);
 
+        _stream = new TcpStream(_client.GetStream());
         _ = ReceiveLoopAsync(_cts.Token);
     }
 
@@ -34,35 +35,32 @@ public class TcpClientNode(IPAddress serverAddress, int port, ISerializer messag
         _cts?.Cancel();
         _client?.Close();
         _client = null;
+        _stream = null;
 
         return ValueTask.CompletedTask;
     }
 
     public async Task SendToMaster(WorkerNodeMessage message)
     {
-        if (_client is null)
+        if (_stream is null)
         {
             throw new InvalidOperationException("Client is not connected.");
         }
 
-        await _client.GetStream().WriteAsync(messageSerializer.Serialize(message));
+        await _stream.WriteAsync(messageSerializer.Serialize(message));
     }
 
     private async Task ReceiveLoopAsync(CancellationToken cancellationToken)
     {
-        if (_client is null)
+        if (_stream is null)
         {
             return;
         }
 
-        byte[] buffer = new byte[4096];
-        NetworkStream stream = _client.GetStream();
-
         while (!cancellationToken.IsCancellationRequested)
         {
-            int bytesRead = await stream.ReadAsync(buffer, cancellationToken);
-            Memory<byte> serializedMessage = buffer.AsMemory(0, bytesRead);
-            MasterNodeMessage message = messageSerializer.Deserialize<MasterNodeMessage>(serializedMessage);
+            Memory<byte> data = await _stream.ReadAsync(cancellationToken);
+            MasterNodeMessage message = messageSerializer.Deserialize<MasterNodeMessage>(data);
             MessageReceived?.Invoke(message);
         }
     }
