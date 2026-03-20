@@ -1,8 +1,14 @@
 using System.Net;
 using DistributedFractals.Server.Core;
+using DistributedFractals.Server.Serialization;
 using DistributedFractals.Server.Tcp;
 
-IMessageNodeFactory factory = new TcpMessageNodeFactory(IPAddress.Loopback, 3000);
+IMessageNodeFactory factory = new TcpMessageNodeFactory(
+    address: IPAddress.Loopback, 
+    port: 3000,
+    messageSerializer: new JsonSerializer()
+);
+
 IMessageMasterNode master = factory.CreateMaster();
 
 master.MessageReceived += async message =>

@@ -1,8 +1,14 @@
 using System.Net;
 using DistributedFractals.Server.Core;
+using DistributedFractals.Server.Serialization;
 using DistributedFractals.Server.Tcp;
 
-IMessageNodeFactory factory = new TcpMessageNodeFactory(IPAddress.Loopback, 3000);
+IMessageNodeFactory factory = new TcpMessageNodeFactory(
+    address: IPAddress.Loopback, 
+    port: 3000,
+    messageSerializer: new JsonSerializer()
+);
+
 await using IMessageWorkerNode worker = factory.CreateWorker();
 
 worker.Identifier.DisplayName = "worker-1";
@@ -19,6 +25,7 @@ await worker.SendToMaster(new WorkerNodeMessage(
     "Hello from worker!"
 ));
 
+Console.WriteLine("Message sent.");
 Console.WriteLine("Press Enter to stop.");
 Console.ReadLine();
 

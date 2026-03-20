@@ -1,13 +1,12 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Text.Json;
 using DistributedFractals.Server.Core;
+using DistributedFractals.Server.Serialization;
 
 namespace DistributedFractals.Server.Tcp;
 
-public class TcpServerNode(IPAddress listenAddress, int port) : IMessageMasterNode
+public class TcpServerNode(IPAddress listenAddress, int port, ISerializer messageSerializer) : IMessageMasterNode
 {
     public event Action<WorkerNodeMessage>? MessageReceived;
 
@@ -41,7 +40,6 @@ public class TcpServerNode(IPAddress listenAddress, int port) : IMessageMasterNo
         }
 
         _clients.Clear();
-
         _listener?.Stop();
         _listener = null;
 
@@ -54,30 +52,16 @@ public class TcpServerNode(IPAddress listenAddress, int port) : IMessageMasterNo
         {
             return;
         }
-
-        NetworkStream stream = client.GetStream();
-        string json = JsonSerializer.Serialize(message);
-        byte[] data = Encoding.UTF8.GetBytes(json);
-
-        await stream.WriteAsync(data);
+        
+        await client.GetStream().WriteAsync(messageSerializer.Serialize(message));
     }
 
     public async Task BroadcastToWorkers(MasterNodeMessage message)
     {
-        string json = JsonSerializer.Serialize(message);
-        byte[] data = Encoding.UTF8.GetBytes(json);
-
         foreach (TcpClient client in _clients.Values)
         {
-            try
-            {
-                NetworkStream stream = client.GetStream();
-                await stream.WriteAsync(data);
-            }
-            catch
-            {
-                // ignore disconnected clients
-            }
+            NetworkStream stream = client.GetStream();
+            await stream.WriteAsync(messageSerializer.Serialize(message));
         }
     }
 
@@ -88,17 +72,10 @@ public class TcpServerNode(IPAddress listenAddress, int port) : IMessageMasterNo
             return;
         }
 
-        try
+        while (!cancellationToken.IsCancellationRequested)
         {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                TcpClient client = await _listener.AcceptTcpClientAsync(cancellationToken);
-                _ = ReceiveLoopAsync(client, cancellationToken);
-            }
-        }
-        catch (Exception)
-        {
-            // TODO
+            TcpClient client = await _listener.AcceptTcpClientAsync(cancellationToken);
+            _ = ReceiveLoopAsync(client, cancellationToken);
         }
     }
 
@@ -106,46 +83,18 @@ public class TcpServerNode(IPAddress listenAddress, int port) : IMessageMasterNo
     {
         byte[] buffer = new byte[4096];
         string? workerId = null;
+        NetworkStream stream = client.GetStream();
 
-        try
+        while (!cancellationToken.IsCancellationRequested)
         {
-            NetworkStream stream = client.GetStream();
+            int bytesRead = await stream.ReadAsync(buffer, cancellationToken);
+            Memory<byte> serializedMessage = buffer.AsMemory(0, bytesRead);
+            WorkerNodeMessage message = messageSerializer.Deserialize<WorkerNodeMessage>(serializedMessage);
 
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                int bytesRead = await stream.ReadAsync(buffer, cancellationToken);
+            workerId ??= message.Sender.Id;
+            _clients[workerId] = client;
 
-                if (bytesRead == 0)
-                {
-                    break;
-                }
-
-                string json = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                WorkerNodeMessage? message = JsonSerializer.Deserialize<WorkerNodeMessage>(json);
-
-                if (message is null)
-                {
-                    continue;
-                }
-
-                workerId ??= message.Sender.Id;
-                _clients[workerId] = client;
-
-                MessageReceived?.Invoke(message);
-            }
-        }
-        catch
-        {
-            // TODO
-        }
-        finally
-        {
-            if (workerId != null)
-            {
-                _clients.TryRemove(workerId, out _);
-            }
-
-            client.Close();
+            MessageReceived?.Invoke(message);
         }
     }
 }

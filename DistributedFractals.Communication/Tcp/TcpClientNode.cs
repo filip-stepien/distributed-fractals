@@ -1,13 +1,13 @@
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Text.Json;
 using DistributedFractals.Server.Core;
+using DistributedFractals.Server.Serialization;
 
 namespace DistributedFractals.Server.Tcp;
 
-public class TcpClientNode(IPAddress serverAddress, int port) : IMessageWorkerNode
+public class TcpClientNode(IPAddress serverAddress, int port, ISerializer messageSerializer) : IMessageWorkerNode
 {
+    
     public MessageNodeIdentifier Identifier { get; } = new();
     public event Action<MasterNodeMessage>? MessageReceived;
 
@@ -45,11 +45,7 @@ public class TcpClientNode(IPAddress serverAddress, int port) : IMessageWorkerNo
             throw new InvalidOperationException("Client is not connected.");
         }
 
-        NetworkStream stream = _client.GetStream();
-        string json = JsonSerializer.Serialize(message);
-        byte[] data = Encoding.UTF8.GetBytes(json);
-
-        await stream.WriteAsync(data);
+        await _client.GetStream().WriteAsync(messageSerializer.Serialize(message));
     }
 
     private async Task ReceiveLoopAsync(CancellationToken cancellationToken)
@@ -60,34 +56,14 @@ public class TcpClientNode(IPAddress serverAddress, int port) : IMessageWorkerNo
         }
 
         byte[] buffer = new byte[4096];
+        NetworkStream stream = _client.GetStream();
 
-        try
+        while (!cancellationToken.IsCancellationRequested)
         {
-            NetworkStream stream = _client.GetStream();
-
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                int bytesRead = await stream.ReadAsync(buffer, cancellationToken);
-
-                if (bytesRead == 0)
-                {
-                    break;
-                }
-
-                string json = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                MasterNodeMessage? message = JsonSerializer.Deserialize<MasterNodeMessage>(json);
-
-                if (message is not null)
-                {
-                    MessageReceived?.Invoke(message);
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-        }
-        catch (ObjectDisposedException)
-        {
+            int bytesRead = await stream.ReadAsync(buffer, cancellationToken);
+            Memory<byte> serializedMessage = buffer.AsMemory(0, bytesRead);
+            MasterNodeMessage message = messageSerializer.Deserialize<MasterNodeMessage>(serializedMessage);
+            MessageReceived?.Invoke(message);
         }
     }
 }
