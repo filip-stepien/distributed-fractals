@@ -1,9 +1,12 @@
-﻿namespace DistributedFractals.Server.Core;
+﻿using DistributedFractals.Server.Messages;
+
+namespace DistributedFractals.Server.Core;
 
 public interface IMessageMasterNode : IMessageNode
 {
-    public event Action<WorkerNodeMessage>? MessageReceived;
+    public event Action<Message>? MessageReceived;
     
-    Task SendToWorker(MessageNodeIdentifier workerIdentifier, MasterNodeMessage message);
-    Task BroadcastToWorkers(MasterNodeMessage message);
+    Task SendToWorker(MessageNodeIdentifier workerIdentifier, Message message);
+    
+    Task BroadcastToWorkers(Message message);
 }

@@ -1,28 +1,26 @@
-﻿namespace DistributedFractals.Server.Serialization;
+﻿using System.Text;
+using Newtonsoft.Json;
 
-using SystemJson = System.Text.Json;
+namespace DistributedFractals.Server.Serialization;
 
 public class JsonSerializer : ISerializer
 {
-    private static readonly SystemJson.JsonSerializerOptions DefaultOptions = new()
+    private static readonly JsonSerializerSettings Settings = new()
     {
-        PropertyNameCaseInsensitive = true
+        TypeNameHandling = TypeNameHandling.All
     };
 
     public ReadOnlyMemory<byte> Serialize<T>(T data)
     {
-        return SystemJson.JsonSerializer.SerializeToUtf8Bytes(data, DefaultOptions);
+        string json = JsonConvert.SerializeObject(data, Settings);
+        return Encoding.UTF8.GetBytes(json);
     }
 
     public T Deserialize<T>(ReadOnlyMemory<byte> bytes)
     {
-        T? result = SystemJson.JsonSerializer.Deserialize<T>(bytes.Span, DefaultOptions);
+        string json = Encoding.UTF8.GetString(bytes.Span);
+        T? result = JsonConvert.DeserializeObject<T>(json, Settings);
 
-        if (result is null)
-        {
-            throw new InvalidOperationException($"Failed to deserialize data to type {typeof(T).Name}.");
-        }
-
-        return result;
+        return result ?? throw new InvalidOperationException($"Failed to deserialize data to type {typeof(T).Name}.");
     }
 }
