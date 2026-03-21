@@ -2,5 +2,7 @@
 
 public interface IMessageNode : IAsyncDisposable
 {
-    Task ConnectAsync();
+    public MessageNodeIdentifier Identifier { get; }
+    
+    Task StartAsync();
 }

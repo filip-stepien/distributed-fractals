@@ -1,28 +1,30 @@
 using System.Net;
 using DistributedFractals.Server.Core;
+using DistributedFractals.Server.Dispatching;
+using DistributedFractals.Server.Handlers;
 using DistributedFractals.Server.Serialization;
 using DistributedFractals.Server.Tcp;
 
 IMessageNodeFactory factory = new TcpMessageNodeFactory(
-    address: IPAddress.Loopback, 
+    address: IPAddress.Loopback,
     port: 3000,
     messageSerializer: new JsonSerializer()
 );
 
 IMessageMasterNode master = factory.CreateMaster();
 
+IMessageDispatcher dispatcher = new MessageDispatcher();
+dispatcher.Register(new HeartbeatMessageHandler());
+dispatcher.Register(new TextMessageHandler());
+
 master.MessageReceived += async message =>
 {
-    Console.WriteLine($"[MASTER] Od {message.Sender.DisplayName}: {message.Content}");
-
-    await master.SendToWorker(message.Sender, new MasterNodeMessage(
-        $"Odebrałem: {message.Content}"
-    ));
+    await dispatcher.DispatchAsync(message);
 };
 
-await master.ConnectAsync();
+await master.StartAsync();
 
-Console.WriteLine("Master is running. Press Enter to stop.");
+Console.WriteLine("[MASTER] Server started...");
 Console.ReadLine();
 
 await master.DisposeAsync();
