@@ -6,10 +6,10 @@ using DistributedFractals.Server.Serialization;
 
 namespace DistributedFractals.Server.Tcp;
 
-public class TcpClientNode(IPAddress serverAddress, int port, ISerializer messageSerializer) : IMessageWorkerNode
+public class TcpClientNode(IPAddress serverAddress, int port, ISerializer serializer) : IMessageWorkerNode
 {
     public MessageNodeIdentifier Identifier { get; } = new();
-    
+
     public event Action<Message>? MessageReceived;
 
     private TcpStream? _stream;
@@ -42,28 +42,22 @@ public class TcpClientNode(IPAddress serverAddress, int port, ISerializer messag
         return ValueTask.CompletedTask;
     }
 
-    public async Task SendToMaster(Message message)
+    public async Task SendAsync(Message message)
     {
         if (_stream is null)
         {
             throw new InvalidOperationException("Client is not connected.");
         }
 
-        await _stream.WriteAsync(messageSerializer.Serialize(message));
+        await _stream.WriteAsync(serializer.Serialize(message));
     }
 
     private async Task ReceiveLoopAsync(CancellationToken cancellationToken)
     {
-        if (_stream is null)
-        {
-            return;
-        }
-
         while (!cancellationToken.IsCancellationRequested)
         {
-            Memory<byte> data = await _stream.ReadAsync(cancellationToken);
-            Message message = messageSerializer.Deserialize<Message>(data);
-            MessageReceived?.Invoke(message);
+            Memory<byte> data = await _stream!.ReadAsync(cancellationToken);
+            MessageReceived?.Invoke(serializer.Deserialize<Message>(data));
         }
     }
 }
