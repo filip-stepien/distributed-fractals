@@ -40,7 +40,7 @@ public class UdpClientNode(IPAddress serverAddress, int serverPort, ISerializer 
         return ValueTask.CompletedTask;
     }
 
-    public async Task SendAsync(Message message)
+    public async Task SendToMasterAsync(Message message)
     {
         if (_udpClient is null)
         {

@@ -42,7 +42,7 @@ public class TcpClientNode(IPAddress serverAddress, int port, ISerializer serial
         return ValueTask.CompletedTask;
     }
 
-    public async Task SendAsync(Message message)
+    public async Task SendToMasterAsync(Message message)
     {
         if (_stream is null)
         {
