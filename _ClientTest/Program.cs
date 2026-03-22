@@ -11,7 +11,7 @@ IMessageWorkerNode worker = new TcpMessageNodeFactory(
 
 worker.Identifier.DisplayName = "worker-1";
 
-IMessageDispatcher dispatcher = new MessageDispatcherFactory().CreateWorkerDispatcher();
+IMessageDispatcher dispatcher = MessageDispatcherFactory.CreateWorkerDispatcher();
 
 worker.MessageReceived += async message =>
 {
@@ -19,13 +19,13 @@ worker.MessageReceived += async message =>
 };
 
 await worker.StartAsync();
-await worker.SendAsync(new JoinMessage(worker.Identifier));
+await worker.SendToMasterAsync(new JoinMessage(worker.Identifier));
 
 Console.WriteLine("[WORKER] Joined.");
 
 await Task.Delay(500);
-await worker.SendAsync(new HeartbeatMessage(worker.Identifier));
-await worker.SendAsync(new TextMessage(worker.Identifier, "hi master"));
+await worker.SendToMasterAsync(new HeartbeatMessage(worker.Identifier));
+await worker.SendToMasterAsync(new TextMessage(worker.Identifier, "hi master"));
 
 Console.WriteLine("[WORKER] Done.");
 Console.ReadLine();

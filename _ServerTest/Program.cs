@@ -8,7 +8,7 @@ IMessageMasterNode master = new TcpMessageNodeFactory(
     IPAddress.Loopback, 3000, new JsonSerializer()
 ).CreateMasterNode();
 
-IMessageDispatcher dispatcher = new MessageDispatcherFactory().CreateMasterDispatcher(master);
+IMessageDispatcher dispatcher = MessageDispatcherFactory.CreateMasterDispatcher(master);
 
 master.MessageReceived += async message =>
 {

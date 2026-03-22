@@ -4,9 +4,9 @@ using DistributedFractals.Server.Handlers.Worker;
 
 namespace DistributedFractals.Server.Dispatching;
 
-public class MessageDispatcherFactory
+public static class MessageDispatcherFactory
 {
-    public IMessageDispatcher CreateMasterDispatcher(IMessageMasterNode master)
+    public static IMessageDispatcher CreateMasterDispatcher(IMessageMasterNode master)
     {
         MessageDispatcher dispatcher = new();
         dispatcher.Register(new MasterJoinMessageHandler(master));
@@ -15,7 +15,7 @@ public class MessageDispatcherFactory
         return dispatcher;
     }
 
-    public IMessageDispatcher CreateWorkerDispatcher()
+    public static IMessageDispatcher CreateWorkerDispatcher()
     {
         MessageDispatcher dispatcher = new();
         dispatcher.Register(new WorkerHeartbeatMessageHandler());

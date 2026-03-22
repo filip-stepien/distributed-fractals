@@ -4,7 +4,5 @@ namespace DistributedFractals.Server.Core;
 
 public interface IMessageWorkerNode : IMessageNode
 {
-    event Action<Message>? MessageReceived;
-
-    Task SendAsync(Message message);
+    Task SendToMasterAsync(Message message);
 }

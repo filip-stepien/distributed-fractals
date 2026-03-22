@@ -11,8 +11,6 @@ public class TcpServerNode(IPAddress listenAddress, int port, ISerializer serial
 {
     public MessageNodeIdentifier Identifier { get; } = new();
 
-    public IReadOnlyCollection<MessageNodeIdentifier> ConnectedWorkers => _connectedWorkers.Values.ToList();
-
     public event Action<Message>? MessageReceived;
 
     private readonly ConcurrentDictionary<string, MessageNodeIdentifier> _connectedWorkers = new();
@@ -62,7 +60,7 @@ public class TcpServerNode(IPAddress listenAddress, int port, ISerializer serial
     {
         if (!_connectedWorkers.ContainsKey(workerIdentifier.Id))
         {
-            throw new InvalidOperationException($"Worker '{workerIdentifier.Id}' has not joined.");
+            throw new InvalidOperationException($"Worker '{workerIdentifier.Id}' is not registered.");
         }
         
         if (!_streams.TryGetValue(workerIdentifier.Id, out TcpStream? stream))
