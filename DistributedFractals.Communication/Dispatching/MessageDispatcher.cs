@@ -24,9 +24,13 @@ public sealed class MessageDispatcher : IMessageDispatcher
     public async Task DispatchAsync(Message message)
     {
         if (!_handlers.TryGetValue(message.GetType(), out var handlers))
+        {
             return;
+        }
 
         foreach (var handler in handlers)
+        {
             await handler(message);
+        }
     }
 }

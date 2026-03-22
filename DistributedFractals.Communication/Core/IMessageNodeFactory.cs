@@ -2,6 +2,6 @@
 
 public interface IMessageNodeFactory
 {
-    IMessageMasterNode CreateMaster();
-    IMessageWorkerNode CreateWorker();
+    IMessageMasterNode CreateMasterNode();
+    IMessageWorkerNode CreateWorkerNode();
 }
