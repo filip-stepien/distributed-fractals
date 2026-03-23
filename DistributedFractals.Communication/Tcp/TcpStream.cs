@@ -16,7 +16,7 @@ internal sealed class TcpStream(Stream stream)
 
             if (bytesRead == 0)
             {
-                throw new EndOfStreamException("Connection closed before full message was received.");
+                throw new EndOfStreamException("Connection closed before full baseMessage was received.");
             }
 
             totalRead += bytesRead;

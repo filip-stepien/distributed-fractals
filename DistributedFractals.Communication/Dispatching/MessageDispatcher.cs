@@ -5,13 +5,13 @@ namespace DistributedFractals.Server.Dispatching;
 
 public sealed class MessageDispatcher : IMessageDispatcher
 {
-    private readonly Dictionary<Type, List<Func<Message, Task>>> _handlers = new();
+    private readonly Dictionary<Type, List<Func<BaseMessage, Task>>> _handlers = new();
 
-    public void Register<TMessage>(params IMessageHandler<TMessage>[] handlers) where TMessage : Message
+    public void Register<TMessage>(params IMessageHandler<TMessage>[] handlers) where TMessage : BaseMessage
     {
         if (!_handlers.TryGetValue(typeof(TMessage), out var list))
         {
-            list = new List<Func<Message, Task>>();
+            list = new List<Func<BaseMessage, Task>>();
             _handlers[typeof(TMessage)] = list;
         }
 
@@ -21,16 +21,16 @@ public sealed class MessageDispatcher : IMessageDispatcher
         }
     }
 
-    public async Task DispatchAsync(Message message)
+    public async Task DispatchAsync(BaseMessage baseMessage)
     {
-        if (!_handlers.TryGetValue(message.GetType(), out var handlers))
+        if (!_handlers.TryGetValue(baseMessage.GetType(), out var handlers))
         {
             return;
         }
 
         foreach (var handler in handlers)
         {
-            await handler(message);
+            await handler(baseMessage);
         }
     }
 }

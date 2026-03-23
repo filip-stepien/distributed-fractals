@@ -8,9 +8,9 @@ namespace DistributedFractals.Server.Tcp;
 
 public class TcpClientNode(IPAddress serverAddress, int port, ISerializer serializer) : IMessageWorkerNode
 {
-    public MessageNodeIdentifier Identifier { get; } = new();
+    public Guid Identifier { get; } = Guid.NewGuid();
 
-    public event Action<Message>? MessageReceived;
+    public event Action<BaseMessage>? MessageReceived;
 
     private TcpStream? _stream;
     private TcpClient? _client;
@@ -42,14 +42,14 @@ public class TcpClientNode(IPAddress serverAddress, int port, ISerializer serial
         return ValueTask.CompletedTask;
     }
 
-    public async Task SendToMasterAsync(Message message)
+    public async Task SendToMasterAsync(BaseMessage baseMessage)
     {
         if (_stream is null)
         {
             throw new InvalidOperationException("Client is not connected.");
         }
 
-        await _stream.WriteAsync(serializer.Serialize(message));
+        await _stream.WriteAsync(serializer.Serialize(baseMessage));
     }
 
     private async Task ReceiveLoopAsync(CancellationToken cancellationToken)
@@ -57,7 +57,7 @@ public class TcpClientNode(IPAddress serverAddress, int port, ISerializer serial
         while (!cancellationToken.IsCancellationRequested)
         {
             Memory<byte> data = await _stream!.ReadAsync(cancellationToken);
-            MessageReceived?.Invoke(serializer.Deserialize<Message>(data));
+            MessageReceived?.Invoke(serializer.Deserialize<BaseMessage>(data));
         }
     }
 }
