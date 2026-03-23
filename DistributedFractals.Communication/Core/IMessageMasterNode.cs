@@ -4,9 +4,14 @@ namespace DistributedFractals.Server.Core;
 
 public interface IMessageMasterNode : IMessageNode
 {
-    void RegisterWorker(MessageNodeIdentifier worker);
-    void UnregisterWorker(MessageNodeIdentifier worker);
+    IReadOnlyCollection<Guid> Workers { get; }
 
-    Task SendToWorkerAsync(MessageNodeIdentifier workerIdentifier, Message message);
-    Task BroadcastAsync(Message message);
+    event Action<Guid>? WorkerRegistered;
+    event Action<Guid>? WorkerUnregistered;
+
+    void RegisterWorker(Guid worker);
+    void UnregisterWorker(Guid worker);
+
+    Task SendToWorkerAsync(Guid workerIdentifier, BaseMessage baseMessage);
+    Task BroadcastAsync(BaseMessage baseMessage);
 }

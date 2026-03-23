@@ -7,29 +7,21 @@ using DistributedFractals.Server.Serialization;
 
 namespace DistributedFractals.Server.Tcp;
 
-public class TcpServerNode(IPAddress listenAddress, int port, ISerializer serializer) : IMessageMasterNode
+public class TcpServerNodeBase(IPAddress listenAddress, int port, ISerializer serializer) : MessageMasterNodeBase
 {
-    public MessageNodeIdentifier Identifier { get; } = new();
+    public override event Action<BaseMessage>? MessageReceived;
 
-    public event Action<Message>? MessageReceived;
-
-    private readonly ConcurrentDictionary<string, MessageNodeIdentifier> _connectedWorkers = new();
-    private readonly ConcurrentDictionary<string, TcpStream> _streams = new();
+    private readonly ConcurrentDictionary<Guid, TcpStream> _streams = new();
     private TcpListener? _listener;
     private CancellationTokenSource? _cts;
 
-    public void RegisterWorker(MessageNodeIdentifier worker)
+    public override void UnregisterWorker(Guid worker)
     {
-        _connectedWorkers[worker.Id] = worker;
+        _streams.TryRemove(worker, out _);
+        base.UnregisterWorker(worker);
     }
 
-    public void UnregisterWorker(MessageNodeIdentifier worker)
-    {
-        _connectedWorkers.TryRemove(worker.Id, out _);
-        _streams.TryRemove(worker.Id, out _);
-    }
-
-    public Task StartAsync()
+    public override Task StartAsync()
     {
         if (_listener != null)
         {
@@ -45,10 +37,9 @@ public class TcpServerNode(IPAddress listenAddress, int port, ISerializer serial
         return Task.CompletedTask;
     }
 
-    public ValueTask DisposeAsync()
+    public override ValueTask DisposeAsync()
     {
         _cts?.Cancel();
-        _connectedWorkers.Clear();
         _streams.Clear();
         _listener?.Stop();
         _listener = null;
@@ -56,24 +47,24 @@ public class TcpServerNode(IPAddress listenAddress, int port, ISerializer serial
         return ValueTask.CompletedTask;
     }
 
-    public async Task SendToWorkerAsync(MessageNodeIdentifier workerIdentifier, Message message)
+    public override async Task SendToWorkerAsync(Guid workerIdentifier, BaseMessage baseMessage)
     {
-        if (!_connectedWorkers.ContainsKey(workerIdentifier.Id))
+        if (!Workers.Contains(workerIdentifier))
         {
-            throw new InvalidOperationException($"Worker '{workerIdentifier.Id}' is not registered.");
-        }
-        
-        if (!_streams.TryGetValue(workerIdentifier.Id, out TcpStream? stream))
-        {
-            throw new InvalidOperationException($"Worker '{workerIdentifier.Id}' stream is unknown.");
+            throw new InvalidOperationException($"Worker '{workerIdentifier}' is not registered.");
         }
 
-        await stream.WriteAsync(serializer.Serialize(message));
+        if (!_streams.TryGetValue(workerIdentifier, out TcpStream? stream))
+        {
+            throw new InvalidOperationException($"Worker '{workerIdentifier}' stream is unknown.");
+        }
+
+        await stream.WriteAsync(serializer.Serialize(baseMessage));
     }
 
-    public async Task BroadcastAsync(Message message)
+    public override async Task BroadcastAsync(BaseMessage baseMessage)
     {
-        ReadOnlyMemory<byte> data = serializer.Serialize(message);
+        ReadOnlyMemory<byte> data = serializer.Serialize(baseMessage);
         foreach (TcpStream stream in _streams.Values)
         {
             await stream.WriteAsync(data);
@@ -92,28 +83,28 @@ public class TcpServerNode(IPAddress listenAddress, int port, ISerializer serial
 
     private async Task ReceiveLoopAsync(TcpClient client, TcpStream stream, CancellationToken cancellationToken)
     {
-        string? workerId = null;
+        Guid? workerId = null;
 
         try
         {
             while (!cancellationToken.IsCancellationRequested)
             {
                 Memory<byte> data = await stream.ReadAsync(cancellationToken);
-                Message message = serializer.Deserialize<Message>(data);
+                BaseMessage baseMessage = serializer.Deserialize<BaseMessage>(data);
 
-                workerId = message.Sender.Id;
-                _streams.TryAdd(workerId, stream);
+                workerId = baseMessage.Sender;
+                _streams.TryAdd(workerId.Value, stream);
 
-                MessageReceived?.Invoke(message);
+                MessageReceived?.Invoke(baseMessage);
             }
         }
         catch (Exception)
         {
-            // connection dropped - worker remains in _connectedWorkers:
+            // connection dropped - worker remains in Workers:
             // heartbeat timeout is responsible for detecting and unregistering dead workers
-            if (workerId != null)
+            if (workerId.HasValue)
             {
-                _streams.TryRemove(workerId, out _);
+                _streams.TryRemove(workerId.Value, out _);
             }
 
             client.Close();

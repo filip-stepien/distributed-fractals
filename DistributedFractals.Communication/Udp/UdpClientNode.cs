@@ -8,9 +8,9 @@ namespace DistributedFractals.Server.Udp;
 
 public class UdpClientNode(IPAddress serverAddress, int serverPort, ISerializer serializer) : IMessageWorkerNode
 {
-    public MessageNodeIdentifier Identifier { get; } = new();
+    public Guid Identifier { get; } = Guid.NewGuid();
 
-    public event Action<Message>? MessageReceived;
+    public event Action<BaseMessage>? MessageReceived;
 
     private UdpClient? _udpClient;
     private CancellationTokenSource? _cts;
@@ -40,14 +40,14 @@ public class UdpClientNode(IPAddress serverAddress, int serverPort, ISerializer 
         return ValueTask.CompletedTask;
     }
 
-    public async Task SendToMasterAsync(Message message)
+    public async Task SendToMasterAsync(BaseMessage baseMessage)
     {
         if (_udpClient is null)
         {
             throw new InvalidOperationException("Client is not started.");
         }
 
-        byte[] data = serializer.Serialize(message).ToArray();
+        byte[] data = serializer.Serialize(baseMessage).ToArray();
         await _udpClient.SendAsync(data);
     }
 
@@ -56,7 +56,7 @@ public class UdpClientNode(IPAddress serverAddress, int serverPort, ISerializer 
         while (!cancellationToken.IsCancellationRequested)
         {
             UdpReceiveResult result = await _udpClient!.ReceiveAsync(cancellationToken);
-            MessageReceived?.Invoke(serializer.Deserialize<Message>(result.Buffer));
+            MessageReceived?.Invoke(serializer.Deserialize<BaseMessage>(result.Buffer));
         }
     }
 }

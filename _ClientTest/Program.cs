@@ -1,6 +1,7 @@
 using System.Net;
 using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Dispatching;
+using DistributedFractals.Server.Handlers.Worker;
 using DistributedFractals.Server.Messages;
 using DistributedFractals.Server.Serialization;
 using DistributedFractals.Server.Tcp;
@@ -9,9 +10,8 @@ IMessageWorkerNode worker = new TcpMessageNodeFactory(
     IPAddress.Loopback, 3000, new JsonSerializer()
 ).CreateWorkerNode();
 
-worker.Identifier.DisplayName = "worker-1";
-
-IMessageDispatcher dispatcher = MessageDispatcherFactory.CreateWorkerDispatcher();
+MessageDispatcher dispatcher = new();
+dispatcher.Register(new WorkerUnregisteredMessageHandler());
 
 worker.MessageReceived += async message =>
 {
@@ -19,15 +19,25 @@ worker.MessageReceived += async message =>
 };
 
 await worker.StartAsync();
-await worker.SendToMasterAsync(new JoinMessage(worker.Identifier));
+await worker.SendToMasterAsync(new JoinBaseMessage(worker.Identifier));
 
 Console.WriteLine("[WORKER] Joined.");
 
-await Task.Delay(500);
-await worker.SendToMasterAsync(new HeartbeatMessage(worker.Identifier));
-await worker.SendToMasterAsync(new TextMessage(worker.Identifier, "hi master"));
+CancellationTokenSource cts = new();
 
-Console.WriteLine("[WORKER] Done.");
+_ = Task.Run(async () =>
+{
+    for (int i = 0; i < 3; i++)
+    {
+        await Task.Delay(2000, cts.Token);
+        await worker.SendToMasterAsync(new HeartbeatBaseMessage(worker.Identifier));
+        Console.WriteLine("[WORKER] Heartbeat sent.");
+    }
+
+    Console.WriteLine("[WORKER] Stopped sending heartbeats.");
+}, cts.Token);
+
 Console.ReadLine();
 
+await cts.CancelAsync();
 await worker.DisposeAsync();

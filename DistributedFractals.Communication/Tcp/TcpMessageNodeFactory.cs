@@ -6,7 +6,7 @@ namespace DistributedFractals.Server.Tcp;
 
 public class TcpMessageNodeFactory(IPAddress address, int port, ISerializer serializer) : IMessageNodeFactory
 {
-    public IMessageMasterNode CreateMasterNode() => new TcpServerNode(address, port, serializer);
+    public IMessageMasterNode CreateMasterNode() => new TcpServerNodeBase(address, port, serializer);
 
     public IMessageWorkerNode CreateWorkerNode() => new TcpClientNode(address, port, serializer);
 }
