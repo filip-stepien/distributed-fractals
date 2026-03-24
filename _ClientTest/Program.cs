@@ -1,4 +1,7 @@
 using System.Net;
+using DistributedFractals.Core.Colorizers;
+using DistributedFractals.Core.Core;
+using DistributedFractals.Core.Generators.Mandelbrot;
 using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Dispatching;
 using DistributedFractals.Server.Handlers.Worker;
@@ -11,7 +14,13 @@ IMessageWorkerNode worker = new TcpMessageNodeFactory(
 ).CreateWorkerNode();
 
 MessageDispatcher dispatcher = new();
-dispatcher.Register(new WorkerUnregisteredMessageHandler());
+dispatcher.Register(new UnregisteredMessageHandler());
+dispatcher.Register(
+    new RenderFractalHandler.Builder(worker)
+        .AddGenerator(FractalGeneratorType.Mandelbrot, new MandelbrotGenerator())
+        .AddColorizer(FractalColorizerType.BlackAndWhite, new BlackAndWhiteColorizer())
+        .Build()
+);
 
 worker.MessageReceived += async message =>
 {
@@ -19,7 +28,7 @@ worker.MessageReceived += async message =>
 };
 
 await worker.StartAsync();
-await worker.SendToMasterAsync(new JoinBaseMessage(worker.Identifier));
+await worker.SendToMasterAsync(new JoinMessage(worker.Identifier));
 
 Console.WriteLine("[WORKER] Joined.");
 
@@ -30,7 +39,7 @@ _ = Task.Run(async () =>
     for (int i = 0; i < 3; i++)
     {
         await Task.Delay(2000, cts.Token);
-        await worker.SendToMasterAsync(new HeartbeatBaseMessage(worker.Identifier));
+        await worker.SendToMasterAsync(new HeartbeatMessage(worker.Identifier));
         Console.WriteLine("[WORKER] Heartbeat sent.");
     }
 

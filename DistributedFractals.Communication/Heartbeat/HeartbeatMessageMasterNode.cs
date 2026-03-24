@@ -4,7 +4,7 @@ using DistributedFractals.Server.Messages;
 
 namespace DistributedFractals.Server.Heartbeat;
 
-public sealed class HeartbeatMasterNode(IMessageMasterNode inner, TimeSpan heartbeatTimeout) : IMessageMasterNode
+public sealed class HeartbeatMessageMasterNode(IMessageMasterNode inner, TimeSpan heartbeatTimeout) : IMessageMasterNode
 {
     private readonly ConcurrentDictionary<Guid, HeartbeatTracker> _trackers = new();
 
@@ -59,7 +59,7 @@ public sealed class HeartbeatMasterNode(IMessageMasterNode inner, TimeSpan heart
 
     private void OnWorkerDead(Guid worker)
     {
-        _ = inner.SendToWorkerAsync(worker, new UnregisteredBaseMessage(inner.Identifier, UnregisterReason.HeartbeatTimeout));
+        _ = inner.SendToWorkerAsync(worker, new UnregisteredMessage(inner.Identifier, UnregisterReason.HeartbeatTimeout));
         UnregisterWorker(worker);
     }
 

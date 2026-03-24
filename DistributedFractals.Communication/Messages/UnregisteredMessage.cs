@@ -5,7 +5,7 @@ public enum UnregisterReason
     HeartbeatTimeout
 }
 
-public sealed record UnregisteredBaseMessage(
+public sealed record UnregisteredMessage(
     Guid Sender,
     UnregisterReason Reason
 ) : BaseMessage(Sender);
