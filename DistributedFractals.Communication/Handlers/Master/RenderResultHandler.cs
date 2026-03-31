@@ -1,13 +1,13 @@
-using DistributedFractals.Core.Core;
+using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Messages;
 
 namespace DistributedFractals.Server.Handlers.Master;
 
-public class RenderResultHandler(Action<FractalResult> onResult) : IMessageHandler<RenderResultMessage>
+public class RenderResultHandler(IFrameResultReceiver receiver) : IMessageHandler<RenderResultMessage>
 {
     public Task HandleAsync(RenderResultMessage message)
     {
-        onResult(message.Result);
+        receiver.OnResultReceived(message.Sender, message.FrameIndex, message.Result);
         return Task.CompletedTask;
     }
 }

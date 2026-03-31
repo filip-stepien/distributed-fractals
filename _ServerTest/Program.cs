@@ -3,6 +3,8 @@ using DistributedFractals.Core.Core;
 using DistributedFractals.Core.Generators.Mandelbrot;
 using DistributedFractals.Core.Zoom;
 using DistributedFractals.Core.Zoom.Interpolations;
+using DistributedFractals.Orchestration.Schedulers;
+using DistributedFractals.Orchestration.Selectors;
 using DistributedFractals.Server.Dispatching;
 using DistributedFractals.Server.Handlers.Master;
 using DistributedFractals.Server.Heartbeat;
@@ -20,54 +22,58 @@ List<ZoomKeyframe> keyframes =
     new ZoomKeyframe(T: 1.0, CenterRe: -0.74529, CenterIm:  0.1130, Scale: 0.001),
 ];
 
-IEnumerable<MandelbrotOptions> zoomFrames = new KeyframeZoomSequenceGenerator<MandelbrotOptions>()
-    .Generate(baseOptions, keyframes, totalFrames: 120, new SmoothStepInterpolation());
-
-string outputPath = Path.Combine(Path.GetTempPath(), "fractal_zoom.gif");
-GifVideoWriter videoWriter = new(outputPath, frameRate: 24, repeat: true);
+IReadOnlyList<MandelbrotOptions> zoomFrames = new KeyframeZoomSequenceGenerator<MandelbrotOptions>()
+    .Generate(baseOptions, keyframes, totalFrames: 120, new SmoothStepInterpolation())
+    .ToList();
 
 HeartbeatMessageMasterNode master = new(new TcpMessageNodeFactory(
     IPAddress.Loopback, 3000, new JsonSerializer()
 ).CreateMasterNode(), TimeSpan.FromSeconds(30));
 
+var frames = zoomFrames
+    .Select((opts, i) => (i, new RenderFractalMessage(
+        master.Identifier,
+        i,
+        FractalGeneratorType.Mandelbrot,
+        FractalColorizerType.CyclingHsv,
+        opts)))
+    .ToList();
+
+FrameScheduler scheduler = new(master, frames, new RoundRobinWorkerSelector(), framesPerWorker: 1);
+
 MessageDispatcher dispatcher = new();
 dispatcher.Register(new JoinMessageHandler(master));
 dispatcher.Register(new HeartbeatMessageHandler(master));
-dispatcher.Register(new RenderResultHandler(async result =>
-{
-    await videoWriter.WriteFrameAsync(result);
-    Console.WriteLine($"[MASTER] Frame written.");
-}));
+dispatcher.Register(new RenderResultHandler(scheduler));
 
 master.MessageReceived += async message =>
 {
     await dispatcher.DispatchAsync(message);
 };
 
-master.WorkerRegistered += async worker =>
+master.WorkerRegistered += worker =>
 {
-    Console.WriteLine($"[MASTER] Worker joined: {worker}. Sending {zoomFrames.Count()} frames...");
-
-    int frameIndex = 0;
-    foreach (MandelbrotOptions frameOptions in zoomFrames)
-    {
-        await master.SendToWorkerAsync(worker, new RenderFractalMessage(
-            master.Identifier,
-            FractalGeneratorType.Mandelbrot,
-            FractalColorizerType.CyclingHsv,
-            frameOptions
-        ));
-
-        Console.WriteLine($"[MASTER] Frame {++frameIndex} sent.");
-    }
+    Console.WriteLine($"[MASTER] Worker joined: {worker}");
+    scheduler.OnWorkerAvailable(worker);
 };
 
 master.WorkerUnregistered += worker =>
-    Console.WriteLine($"[MASTER] Worker unregistered: {worker}");
+{
+    Console.WriteLine($"[MASTER] Worker unregistered: {worker}.");
+    scheduler.OnWorkerFailed(worker);
+};
 
 await master.StartAsync();
-Console.WriteLine("[MASTER] Server started...");
-Console.ReadLine();
+Console.WriteLine("[MASTER] Server started. Waiting for workers...");
+
+await scheduler.WaitForAllAsync();
+Console.WriteLine("[MASTER] All frames received. Saving GIF...");
+
+string outputPath = Path.Combine(Path.GetTempPath(), "fractal_zoom.gif");
+GifVideoWriter videoWriter = new(outputPath, frameRate: 24, repeat: true);
+
+foreach (FractalResult frame in scheduler.GetOrderedResults())
+    await videoWriter.WriteFrameAsync(frame);
 
 await videoWriter.DisposeAsync();
 Console.WriteLine($"[MASTER] GIF saved: {outputPath}");

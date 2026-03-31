@@ -18,9 +18,10 @@ public class RenderFractalHandler(
         if (!colorizers.TryGetValue(message.ColorizerType, out IFractalColorizer? colorizer))
             throw new InvalidOperationException($"No colorizer registered for {message.ColorizerType}.");
 
+        Console.WriteLine($"[WORKER] Rendering frame {message.FrameIndex}...");
         FractalResult result = generate(message.Options, colorizer);
-        Console.WriteLine($"[WORKER] Frame rendered ({result.Width}x{result.Height}).");
-        await worker.SendToMasterAsync(new RenderResultMessage(worker.Identifier, result));
+        Console.WriteLine($"[WORKER] Frame {message.FrameIndex} rendered ({result.Width}x{result.Height}). Sending result...");
+        await worker.SendToMasterAsync(new RenderResultMessage(worker.Identifier, message.FrameIndex, result));
     }
 
     public class Builder(IMessageWorkerNode worker)

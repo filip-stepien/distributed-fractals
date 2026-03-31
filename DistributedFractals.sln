@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_ServerTest", "_ServerTest\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedFractals.Video", "DistributedFractals.Video\DistributedFractals.Video.csproj", "{ACF758AF-257E-4ACA-9754-8126E7E89A10}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedFractals.Orchestration", "DistributedFractals.Orchestration\DistributedFractals.Orchestration.csproj", "{4DE0565D-3D80-44C8-9766-B95FF06E1142}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -108,6 +110,18 @@ Global
 		{ACF758AF-257E-4ACA-9754-8126E7E89A10}.Release|x64.Build.0 = Release|Any CPU
 		{ACF758AF-257E-4ACA-9754-8126E7E89A10}.Release|x86.ActiveCfg = Release|Any CPU
 		{ACF758AF-257E-4ACA-9754-8126E7E89A10}.Release|x86.Build.0 = Release|Any CPU
+		{4DE0565D-3D80-44C8-9766-B95FF06E1142}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DE0565D-3D80-44C8-9766-B95FF06E1142}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DE0565D-3D80-44C8-9766-B95FF06E1142}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4DE0565D-3D80-44C8-9766-B95FF06E1142}.Debug|x64.Build.0 = Debug|Any CPU
+		{4DE0565D-3D80-44C8-9766-B95FF06E1142}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4DE0565D-3D80-44C8-9766-B95FF06E1142}.Debug|x86.Build.0 = Debug|Any CPU
+		{4DE0565D-3D80-44C8-9766-B95FF06E1142}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DE0565D-3D80-44C8-9766-B95FF06E1142}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DE0565D-3D80-44C8-9766-B95FF06E1142}.Release|x64.ActiveCfg = Release|Any CPU
+		{4DE0565D-3D80-44C8-9766-B95FF06E1142}.Release|x64.Build.0 = Release|Any CPU
+		{4DE0565D-3D80-44C8-9766-B95FF06E1142}.Release|x86.ActiveCfg = Release|Any CPU
+		{4DE0565D-3D80-44C8-9766-B95FF06E1142}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
