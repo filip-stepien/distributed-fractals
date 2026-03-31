@@ -9,9 +9,9 @@ using DistributedFractals.Server.Heartbeat;
 using DistributedFractals.Server.Messages;
 using DistributedFractals.Server.Serialization;
 using DistributedFractals.Server.Tcp;
-using ServerTest;
+using DistributedFractals.Video.Gif;
 
-MandelbrotOptions baseOptions = new(800, 600, MaxIterations: 500);
+MandelbrotOptions baseOptions = new(400, 300, MaxIterations: 500);
 
 List<ZoomKeyframe> keyframes =
 [
@@ -21,7 +21,10 @@ List<ZoomKeyframe> keyframes =
 ];
 
 IEnumerable<MandelbrotOptions> zoomFrames = new KeyframeZoomSequenceGenerator<MandelbrotOptions>()
-    .Generate(baseOptions, keyframes, totalFrames: 20, new SmoothStepInterpolation());
+    .Generate(baseOptions, keyframes, totalFrames: 30, new SmoothStepInterpolation());
+
+string outputPath = Path.Combine(Path.GetTempPath(), "fractal_zoom.gif");
+GifVideoWriter videoWriter = new(outputPath, frameRate: 10, repeat: true);
 
 HeartbeatMessageMasterNode master = new(new TcpMessageNodeFactory(
     IPAddress.Loopback, 3000, new JsonSerializer()
@@ -30,13 +33,10 @@ HeartbeatMessageMasterNode master = new(new TcpMessageNodeFactory(
 MessageDispatcher dispatcher = new();
 dispatcher.Register(new JoinMessageHandler(master));
 dispatcher.Register(new HeartbeatMessageHandler(master));
-
-int framesSaved = 0;
-dispatcher.Register(new RenderResultHandler(result =>
+dispatcher.Register(new RenderResultHandler(async result =>
 {
-    int index = Interlocked.Increment(ref framesSaved);
-    string path = FractalImageSaver.Save(result, $"frame_{index:D4}");
-    Console.WriteLine($"[MASTER] Frame {index} saved: {path}");
+    await videoWriter.WriteFrameAsync(result);
+    Console.WriteLine($"[MASTER] Frame written.");
 }));
 
 master.MessageReceived += async message =>
@@ -68,5 +68,8 @@ master.WorkerUnregistered += worker =>
 await master.StartAsync();
 Console.WriteLine("[MASTER] Server started...");
 Console.ReadLine();
+
+await videoWriter.DisposeAsync();
+Console.WriteLine($"[MASTER] GIF saved: {outputPath}");
 
 await master.DisposeAsync();

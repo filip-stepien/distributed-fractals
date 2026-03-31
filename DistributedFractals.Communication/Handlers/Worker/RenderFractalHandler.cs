@@ -19,6 +19,7 @@ public class RenderFractalHandler(
             throw new InvalidOperationException($"No colorizer registered for {message.ColorizerType}.");
 
         FractalResult result = generate(message.Options, colorizer);
+        Console.WriteLine($"[WORKER] Frame rendered ({result.Width}x{result.Height}).");
         await worker.SendToMasterAsync(new RenderResultMessage(worker.Identifier, result));
     }
 
