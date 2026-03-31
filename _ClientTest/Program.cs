@@ -30,20 +30,18 @@ worker.MessageReceived += async message =>
 await worker.StartAsync();
 await worker.SendToMasterAsync(new JoinMessage(worker.Identifier));
 
-Console.WriteLine("[WORKER] Joined.");
+Console.WriteLine("[WORKER] Joined. Press Enter to quit.");
 
 CancellationTokenSource cts = new();
 
 _ = Task.Run(async () =>
 {
-    for (int i = 0; i < 3; i++)
+    using PeriodicTimer timer = new(TimeSpan.FromSeconds(5));
+    while (await timer.WaitForNextTickAsync(cts.Token))
     {
-        await Task.Delay(2000, cts.Token);
         await worker.SendToMasterAsync(new HeartbeatMessage(worker.Identifier));
         Console.WriteLine("[WORKER] Heartbeat sent.");
     }
-
-    Console.WriteLine("[WORKER] Stopped sending heartbeats.");
 }, cts.Token);
 
 Console.ReadLine();

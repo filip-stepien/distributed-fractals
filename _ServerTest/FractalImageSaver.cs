@@ -5,7 +5,7 @@ namespace ServerTest;
 
 public static class FractalImageSaver
 {
-    public static string Save(FractalResult result)
+    public static string Save(FractalResult result, string? fileName = null)
     {
         using SKBitmap bitmap = new((int)result.Width, (int)result.Height);
 
@@ -19,7 +19,8 @@ public static class FractalImageSaver
             bitmap.SetPixel(x, y, new SKColor(r, g, b));
         }
 
-        string path = Path.Combine(Path.GetTempPath(), $"fractal_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+        fileName ??= $"fractal_{DateTime.Now:yyyyMMdd_HHmmss}";
+        string path = Path.Combine(Path.GetTempPath(), $"{fileName}.png");
         using SKFileWStream stream = new(path);
         bitmap.Encode(stream, SKEncodedImageFormat.Png, 100);
         return path;
