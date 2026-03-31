@@ -7,18 +7,18 @@ using DistributedFractals.Server.Serialization;
 
 namespace DistributedFractals.Server.Udp;
 
-public class UdpServerNodeBase(IPAddress listenAddress, int port, ISerializer serializer) : MessageMasterNodeBase
+public class UdpServer(IPAddress listenAddress, int port, ISerializer serializer) : MessageServerBase
 {
     public override event Action<BaseMessage>? MessageReceived;
 
     private readonly ConcurrentDictionary<Guid, IPEndPoint> _endpoints = new();
-    private UdpClient? _udpClient;
+    private System.Net.Sockets.UdpClient? _udpClient;
     private CancellationTokenSource? _cts;
 
-    public override void UnregisterWorker(Guid worker)
+    public override void UnregisterClient(Guid client)
     {
-        _endpoints.TryRemove(worker, out _);
-        base.UnregisterWorker(worker);
+        _endpoints.TryRemove(client, out _);
+        base.UnregisterClient(client);
     }
 
     public override Task StartAsync()
@@ -29,7 +29,7 @@ public class UdpServerNodeBase(IPAddress listenAddress, int port, ISerializer se
         }
 
         _cts = new CancellationTokenSource();
-        _udpClient = new UdpClient(new IPEndPoint(listenAddress, port));
+        _udpClient = new System.Net.Sockets.UdpClient(new IPEndPoint(listenAddress, port));
 
         _ = ReceiveLoopAsync(_cts.Token);
 
@@ -46,16 +46,16 @@ public class UdpServerNodeBase(IPAddress listenAddress, int port, ISerializer se
         return ValueTask.CompletedTask;
     }
 
-    public override async Task SendToWorkerAsync(Guid workerIdentifier, BaseMessage baseMessage)
+    public override async Task SendToClientAsync(Guid clientIdentifier, BaseMessage baseMessage)
     {
-        if (!Workers.Contains(workerIdentifier))
+        if (!Clients.Contains(clientIdentifier))
         {
-            throw new InvalidOperationException($"Worker '{workerIdentifier}' is not registered.");
+            throw new InvalidOperationException($"Worker '{clientIdentifier}' is not registered.");
         }
 
-        if (!_endpoints.TryGetValue(workerIdentifier, out IPEndPoint? endpoint))
+        if (!_endpoints.TryGetValue(clientIdentifier, out IPEndPoint? endpoint))
         {
-            throw new InvalidOperationException($"Worker '{workerIdentifier}' endpoint is unknown.");
+            throw new InvalidOperationException($"Worker '{clientIdentifier}' endpoint is unknown.");
         }
 
         byte[] data = serializer.Serialize(baseMessage).ToArray();

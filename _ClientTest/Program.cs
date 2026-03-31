@@ -4,32 +4,32 @@ using DistributedFractals.Core.Core;
 using DistributedFractals.Core.Generators.Mandelbrot;
 using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Dispatching;
-using DistributedFractals.Server.Handlers.Worker;
+using DistributedFractals.Server.Handlers;
 using DistributedFractals.Server.Messages;
 using DistributedFractals.Server.Serialization;
 using DistributedFractals.Server.Tcp;
 
-IMessageWorkerNode worker = new TcpMessageNodeFactory(
+IMessageClient client = new TcpTransportFactory(
     IPAddress.Loopback, 3000, new JsonSerializer()
-).CreateWorkerNode();
+).CreateClient();
 
 MessageDispatcher dispatcher = new();
 dispatcher.Register(new UnregisteredMessageHandler());
 dispatcher.Register(
-    new RenderFractalHandler.Builder(worker)
+    new RenderFractalHandler.Builder(client)
         .AddGenerator(FractalGeneratorType.Mandelbrot, new MandelbrotGenerator())
         .AddColorizer(FractalColorizerType.BlackAndWhite, new BlackAndWhiteColorizer())
         .AddColorizer(FractalColorizerType.CyclingHsv, new CyclingHsvColorizer())
         .Build()
 );
 
-worker.MessageReceived += async message =>
+client.MessageReceived += async message =>
 {
     await dispatcher.DispatchAsync(message);
 };
 
-await worker.StartAsync();
-await worker.SendToMasterAsync(new JoinMessage(worker.Identifier));
+await client.StartAsync();
+await client.SendToServerAsync(new JoinMessage(client.Identifier));
 
 Console.WriteLine("[WORKER] Joined. Press Enter to quit.");
 
@@ -40,7 +40,7 @@ _ = Task.Run(async () =>
     using PeriodicTimer timer = new(TimeSpan.FromSeconds(5));
     while (await timer.WaitForNextTickAsync(cts.Token))
     {
-        await worker.SendToMasterAsync(new HeartbeatMessage(worker.Identifier));
+        await client.SendToServerAsync(new HeartbeatMessage(client.Identifier));
         Console.WriteLine("[WORKER] Heartbeat sent.");
     }
 }, cts.Token);
@@ -48,4 +48,4 @@ _ = Task.Run(async () =>
 Console.ReadLine();
 
 await cts.CancelAsync();
-await worker.DisposeAsync();
+await client.DisposeAsync();

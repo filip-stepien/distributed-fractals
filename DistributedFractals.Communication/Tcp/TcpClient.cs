@@ -6,14 +6,14 @@ using DistributedFractals.Server.Serialization;
 
 namespace DistributedFractals.Server.Tcp;
 
-public class TcpClientNode(IPAddress serverAddress, int port, ISerializer serializer) : IMessageWorkerNode
+public class TcpClient(IPAddress serverAddress, int port, ISerializer serializer) : IMessageClient
 {
     public Guid Identifier { get; } = Guid.NewGuid();
 
     public event Action<BaseMessage>? MessageReceived;
 
     private TcpStream? _stream;
-    private TcpClient? _client;
+    private System.Net.Sockets.TcpClient? _client;
     private CancellationTokenSource? _cts;
 
     public async Task StartAsync()
@@ -24,7 +24,7 @@ public class TcpClientNode(IPAddress serverAddress, int port, ISerializer serial
         }
 
         _cts = new CancellationTokenSource();
-        _client = new TcpClient();
+        _client = new System.Net.Sockets.TcpClient();
 
         await _client.ConnectAsync(serverAddress, port);
 
@@ -42,7 +42,7 @@ public class TcpClientNode(IPAddress serverAddress, int port, ISerializer serial
         return ValueTask.CompletedTask;
     }
 
-    public async Task SendToMasterAsync(BaseMessage baseMessage)
+    public async Task SendToServerAsync(BaseMessage baseMessage)
     {
         if (_stream is null)
         {

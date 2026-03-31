@@ -7,8 +7,8 @@ namespace DistributedFractals.Orchestration.Schedulers;
 
 public sealed class FrameScheduler : IFrameScheduler
 {
-    private readonly IMessageMasterNode _master;
-    private readonly IWorkerSelector _selector;
+    private readonly IMessageServer _master;
+    private readonly IClientSelector _selector;
     private readonly int _framesPerWorker;
     private readonly int _totalFrames;
 
@@ -19,9 +19,9 @@ public sealed class FrameScheduler : IFrameScheduler
     private readonly TaskCompletionSource _allDone = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     public FrameScheduler(
-        IMessageMasterNode master,
+        IMessageServer master,
         IEnumerable<(int index, RenderFractalMessage msg)> frames,
-        IWorkerSelector selector,
+        IClientSelector selector,
         int framesPerWorker = 1)
     {
         _master = master;
@@ -42,24 +42,24 @@ public sealed class FrameScheduler : IFrameScheduler
             return _completed.Values.ToList();
     }
 
-    public void OnWorkerAvailable(Guid worker)
+    public void OnClientAvailable(Guid client)
     {
         lock (_lock)
         {
-            _inFlight.TryAdd(worker, []);
+            _inFlight.TryAdd(client, []);
             TryDispatch();
         }
     }
 
-    public void OnResultReceived(Guid worker, int frameIndex, FractalResult result)
+    public void OnResultReceived(Guid client, int frameIndex, FractalResult result)
     {
         lock (_lock)
         {
-            if (_inFlight.TryGetValue(worker, out var frames))
+            if (_inFlight.TryGetValue(client, out var frames))
                 frames.RemoveAll(f => f.index == frameIndex);
 
             _completed[frameIndex] = result;
-            Console.WriteLine($"[MASTER] Frame {frameIndex} received from worker {worker} ({_completed.Count}/{_totalFrames}).");
+            Console.WriteLine($"[MASTER] Frame {frameIndex} received from client {client} ({_completed.Count}/{_totalFrames}).");
 
             if (_completed.Count == _totalFrames)
             {
@@ -71,15 +71,15 @@ public sealed class FrameScheduler : IFrameScheduler
         }
     }
 
-    public void OnWorkerFailed(Guid worker)
+    public void OnClientFailed(Guid client)
     {
         lock (_lock)
         {
-            if (_inFlight.Remove(worker, out var frames))
+            if (_inFlight.Remove(client, out var frames))
             {
                 foreach (var frame in frames)
                 {
-                    Console.WriteLine($"[MASTER] Re-queuing frame {frame.index} after worker {worker} failed.");
+                    Console.WriteLine($"[MASTER] Re-queuing frame {frame.index} after client {client} failed.");
                     _pending.Enqueue(frame);
                 }
             }
@@ -97,13 +97,13 @@ public sealed class FrameScheduler : IFrameScheduler
                 .Select(kv => kv.Key)
                 .ToList();
 
-            Guid? worker = _selector.Select(workersWithCapacity);
-            if (worker is null) break;
+            Guid? client = _selector.Select(workersWithCapacity);
+            if (client is null) break;
 
             var frame = _pending.Dequeue();
-            _inFlight[worker.Value].Add(frame);
-            Console.WriteLine($"[MASTER] Sending frame {frame.index} to worker {worker.Value}.");
-            _ = _master.SendToWorkerAsync(worker.Value, frame.msg);
+            _inFlight[client.Value].Add(frame);
+            Console.WriteLine($"[MASTER] Sending frame {frame.index} to client {client.Value}.");
+            _ = _master.SendToClientAsync(client.Value, frame.msg);
         }
     }
 }

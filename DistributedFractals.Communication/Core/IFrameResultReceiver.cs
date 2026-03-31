@@ -4,5 +4,5 @@ namespace DistributedFractals.Server.Core;
 
 public interface IFrameResultReceiver
 {
-    void OnResultReceived(Guid worker, int frameIndex, FractalResult result);
+    void OnResultReceived(Guid client, int frameIndex, FractalResult result);
 }

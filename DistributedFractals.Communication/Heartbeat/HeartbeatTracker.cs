@@ -1,8 +1,8 @@
 namespace DistributedFractals.Server.Heartbeat;
 
-public sealed class HeartbeatTracker(Guid worker, TimeSpan timeout) : IAsyncDisposable
+public sealed class HeartbeatTracker(Guid client, TimeSpan timeout) : IAsyncDisposable
 {
-    public event Action<Guid>? WorkerDead;
+    public event Action<Guid>? ClientDead;
 
     private readonly PeriodicTimer _timer = new(timeout);
     private readonly CancellationTokenSource _cts = new();
@@ -25,7 +25,7 @@ public sealed class HeartbeatTracker(Guid worker, TimeSpan timeout) : IAsyncDisp
         {
             if (DateTime.UtcNow - _lastHeartbeat > timeout)
             {
-                WorkerDead?.Invoke(worker);
+                ClientDead?.Invoke(client);
                 return;
             }
         }

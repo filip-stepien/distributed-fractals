@@ -1,7 +1,7 @@
 using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Messages;
 
-namespace DistributedFractals.Server.Handlers.Master;
+namespace DistributedFractals.Server.Handlers;
 
 public class RenderResultHandler(IFrameResultReceiver receiver) : IMessageHandler<RenderResultMessage>
 {

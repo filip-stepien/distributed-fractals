@@ -6,7 +6,7 @@ using DistributedFractals.Core.Zoom.Interpolations;
 using DistributedFractals.Orchestration.Schedulers;
 using DistributedFractals.Orchestration.Selectors;
 using DistributedFractals.Server.Dispatching;
-using DistributedFractals.Server.Handlers.Master;
+using DistributedFractals.Server.Handlers;
 using DistributedFractals.Server.Heartbeat;
 using DistributedFractals.Server.Messages;
 using DistributedFractals.Server.Serialization;
@@ -26,9 +26,9 @@ IReadOnlyList<MandelbrotOptions> zoomFrames = new KeyframeZoomSequenceGenerator<
     .Generate(baseOptions, keyframes, totalFrames: 120, new SmoothStepInterpolation())
     .ToList();
 
-HeartbeatMessageMasterNode master = new(new TcpMessageNodeFactory(
+HeartbeatMessageServer master = new(new TcpTransportFactory(
     IPAddress.Loopback, 3000, new JsonSerializer()
-).CreateMasterNode(), TimeSpan.FromSeconds(30));
+).CreateServer(), TimeSpan.FromSeconds(30));
 
 var frames = zoomFrames
     .Select((opts, i) => (i, new RenderFractalMessage(
@@ -39,7 +39,7 @@ var frames = zoomFrames
         opts)))
     .ToList();
 
-FrameScheduler scheduler = new(master, frames, new RoundRobinWorkerSelector(), framesPerWorker: 1);
+FrameScheduler scheduler = new(master, frames, new RoundRobinClientSelector(), framesPerWorker: 1);
 
 MessageDispatcher dispatcher = new();
 dispatcher.Register(new JoinMessageHandler(master));
@@ -51,16 +51,16 @@ master.MessageReceived += async message =>
     await dispatcher.DispatchAsync(message);
 };
 
-master.WorkerRegistered += worker =>
+master.ClientRegistered += client =>
 {
-    Console.WriteLine($"[MASTER] Worker joined: {worker}");
-    scheduler.OnWorkerAvailable(worker);
+    Console.WriteLine($"[MASTER] Worker joined: {client}");
+    scheduler.OnClientAvailable(client);
 };
 
-master.WorkerUnregistered += worker =>
+master.ClientUnregistered += client =>
 {
-    Console.WriteLine($"[MASTER] Worker unregistered: {worker}.");
-    scheduler.OnWorkerFailed(worker);
+    Console.WriteLine($"[MASTER] Worker unregistered: {client}.");
+    scheduler.OnClientFailed(client);
 };
 
 await master.StartAsync();

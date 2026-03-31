@@ -1,6 +1,6 @@
 using DistributedFractals.Server.Messages;
 
-namespace DistributedFractals.Server.Handlers.Worker;
+namespace DistributedFractals.Server.Handlers;
 
 public class UnregisteredMessageHandler : IMessageHandler<UnregisteredMessage>
 {

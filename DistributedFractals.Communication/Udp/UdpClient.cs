@@ -6,13 +6,13 @@ using DistributedFractals.Server.Serialization;
 
 namespace DistributedFractals.Server.Udp;
 
-public class UdpClientNode(IPAddress serverAddress, int serverPort, ISerializer serializer) : IMessageWorkerNode
+public class UdpClient(IPAddress serverAddress, int serverPort, ISerializer serializer) : IMessageClient
 {
     public Guid Identifier { get; } = Guid.NewGuid();
 
     public event Action<BaseMessage>? MessageReceived;
 
-    private UdpClient? _udpClient;
+    private System.Net.Sockets.UdpClient? _udpClient;
     private CancellationTokenSource? _cts;
 
     public Task StartAsync()
@@ -23,7 +23,7 @@ public class UdpClientNode(IPAddress serverAddress, int serverPort, ISerializer 
         }
 
         _cts = new CancellationTokenSource();
-        _udpClient = new UdpClient();
+        _udpClient = new System.Net.Sockets.UdpClient();
         _udpClient.Connect(serverAddress, serverPort);
 
         _ = ReceiveLoopAsync(_cts.Token);
@@ -40,7 +40,7 @@ public class UdpClientNode(IPAddress serverAddress, int serverPort, ISerializer 
         return ValueTask.CompletedTask;
     }
 
-    public async Task SendToMasterAsync(BaseMessage baseMessage)
+    public async Task SendToServerAsync(BaseMessage baseMessage)
     {
         if (_udpClient is null)
         {

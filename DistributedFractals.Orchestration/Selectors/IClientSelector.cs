@@ -1,6 +1,6 @@
 namespace DistributedFractals.Orchestration.Selectors;
 
-public interface IWorkerSelector
+public interface IClientSelector
 {
     Guid? Select(IReadOnlyList<Guid> workers);
 }

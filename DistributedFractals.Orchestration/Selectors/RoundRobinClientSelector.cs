@@ -1,6 +1,6 @@
 namespace DistributedFractals.Orchestration.Selectors;
 
-public sealed class RoundRobinWorkerSelector : IWorkerSelector
+public sealed class RoundRobinClientSelector : IClientSelector
 {
     private int _index;
 
