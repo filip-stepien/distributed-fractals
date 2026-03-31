@@ -21,10 +21,10 @@ List<ZoomKeyframe> keyframes =
 ];
 
 IEnumerable<MandelbrotOptions> zoomFrames = new KeyframeZoomSequenceGenerator<MandelbrotOptions>()
-    .Generate(baseOptions, keyframes, totalFrames: 30, new SmoothStepInterpolation());
+    .Generate(baseOptions, keyframes, totalFrames: 120, new SmoothStepInterpolation());
 
 string outputPath = Path.Combine(Path.GetTempPath(), "fractal_zoom.gif");
-GifVideoWriter videoWriter = new(outputPath, frameRate: 10, repeat: true);
+GifVideoWriter videoWriter = new(outputPath, frameRate: 24, repeat: true);
 
 HeartbeatMessageMasterNode master = new(new TcpMessageNodeFactory(
     IPAddress.Loopback, 3000, new JsonSerializer()
@@ -54,7 +54,7 @@ master.WorkerRegistered += async worker =>
         await master.SendToWorkerAsync(worker, new RenderFractalMessage(
             master.Identifier,
             FractalGeneratorType.Mandelbrot,
-            FractalColorizerType.BlackAndWhite,
+            FractalColorizerType.CyclingHsv,
             frameOptions
         ));
 

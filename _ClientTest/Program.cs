@@ -19,6 +19,7 @@ dispatcher.Register(
     new RenderFractalHandler.Builder(worker)
         .AddGenerator(FractalGeneratorType.Mandelbrot, new MandelbrotGenerator())
         .AddColorizer(FractalColorizerType.BlackAndWhite, new BlackAndWhiteColorizer())
+        .AddColorizer(FractalColorizerType.CyclingHsv, new CyclingHsvColorizer())
         .Build()
 );
 
