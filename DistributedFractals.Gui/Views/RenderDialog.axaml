@@ -1,0 +1,100 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DistributedFractals.Gui.Views.RenderDialog"
+        Title="Start Render"
+        Width="400"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource AppBgBrush}">
+
+    <Border Background="{StaticResource AppBgBrush}"
+            BorderBrush="{StaticResource AppBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="0">
+        <StackPanel Margin="24" Spacing="8">
+
+            <!-- Title -->
+            <TextBlock Text="Output Details"
+                       FontSize="13" FontWeight="SemiBold"
+                       Foreground="{StaticResource AppTextBrush}" />
+
+            <!-- Summary -->
+            <Border Background="{StaticResource AppSurfaceBrush}"
+                    BorderBrush="{StaticResource AppBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="14,12">
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" >
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Resolution"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{StaticResource AppTextMutedBrush}" />
+                    <TextBlock x:Name="SummaryResolution" Grid.Row="0" Grid.Column="1"
+                               FontSize="11" Foreground="{StaticResource AppTextBrush}"
+                               HorizontalAlignment="Right" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Frames"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{StaticResource AppTextMutedBrush}"
+                               Margin="0,8,0,0" />
+                    <TextBlock x:Name="SummaryFrames" Grid.Row="1" Grid.Column="1"
+                               FontSize="11" Foreground="{StaticResource AppTextBrush}"
+                               HorizontalAlignment="Right"
+                               Margin="0,8,0,0" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Duration"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{StaticResource AppTextMutedBrush}"
+                               Margin="0,8,0,0" />
+                    <TextBlock x:Name="SummaryDuration" Grid.Row="2" Grid.Column="1"
+                               FontSize="11" Foreground="{StaticResource AppTextBrush}"
+                               HorizontalAlignment="Right"
+                               Margin="0,8,0,0" />
+                </Grid>
+            </Border>
+
+            <!-- Save location -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Output File"
+                           FontSize="13" FontWeight="SemiBold"
+                           Foreground="{StaticResource AppTextBrush}" />
+                <Grid ColumnDefinitions="*,6,Auto">
+                    <TextBox x:Name="OutputPathInput"
+                             Grid.Column="0"
+                             IsReadOnly="True"
+                             FontSize="12"
+                             ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+                             Foreground="{StaticResource AppTextMutedBrush}"
+                             ToolTip.Tip="{Binding #OutputPathInput.Text}" />
+                    <Button Grid.Column="2"
+                            Content="..."
+                            Classes="panel-action"
+                            Click="OnBrowseClick"
+                            ToolTip.Tip="Choose output file location" />
+                </Grid>
+            </StackPanel>
+
+            <!-- Actions -->
+            <Grid ColumnDefinitions="*,8,*" Margin="0,4,0,0">
+                <Button Grid.Column="0"
+                        Content="Cancel"
+                        Classes="muted"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        Padding="0,10"
+                        Click="OnCancelClick" />
+                <Button x:Name="StartButton"
+                        Grid.Column="2"
+                        Content="▶  Start"
+                        Classes="accent"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        Padding="0,10"
+                        IsEnabled="False"
+                        Click="OnStartClick" />
+            </Grid>
+
+        </StackPanel>
+    </Border>
+
+</Window>

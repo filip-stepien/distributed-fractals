@@ -1,78 +1,83 @@
-using System.Threading.Tasks;
+using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Media.Imaging;
-using DistributedFractals.Core.Colorizers;
-using DistributedFractals.Core.Core;
-using DistributedFractals.Core.Generators.Mandelbrot;
+using DistributedFractals.Gui.Views;
 
 namespace DistributedFractals.Gui;
 
 public partial class MainWindow : Window
 {
+    /// <summary>Always-visible clients panel (server mode only). Use to report connect/disconnect events.</summary>
+    public readonly ClientsPanel ClientsPanel = new();
+
     public MainWindow()
     {
         InitializeComponent();
+        ClientsSidebarContent.Content = ClientsPanel;
+        ContentArea.Content = new ConnectView();
+        ConsoleBorder.IsVisible = false;
     }
 
-    private async void OnGenerateClick(object? sender, RoutedEventArgs e)
+    public void NavigateToMain(bool isServerMode, string serverAddress = "")
     {
-        GenerateButton.IsEnabled = false;
-        GenerateButton.Content = "Generating...";
+        SetConsoleVisible(true);
 
-        try
+        if (isServerMode)
         {
-            int width = 800;
-            int height = 600;
-            ulong maxIterations = (ulong)(MaxIterationsInput.Value ?? 1000);
+            SetSidebarVisible(true);
+            ContentArea.Content = new MainView(isServerMode);
 
-            var options = new MandelbrotOptions(
-                Width: (ulong)width,
-                Height: (ulong)height,
-                MaxIterations: maxIterations
-            );
-
-            var generator = new MandelbrotGenerator();
-            var colorizer = new BlackAndWhiteColorizer();
-
-            FractalResult result = await Task.Run(() => generator.Generate(options, colorizer));
-
-            var bitmap = new WriteableBitmap(
-                new Avalonia.PixelSize(width, height),
-                new Avalonia.Vector(96, 96),
-                Avalonia.Platform.PixelFormat.Bgra8888,
-                Avalonia.Platform.AlphaFormat.Opaque);
-
-            using (var fb = bitmap.Lock())
-            {
-                unsafe
-                {
-                    byte* ptr = (byte*)fb.Address;
-                    int stride = fb.RowBytes;
-
-                    foreach (FractalPoint point in result.FractalPoints)
-                    {
-                        int x = (int)point.Coordinates.X;
-                        int y = (int)point.Coordinates.Y;
-                        byte r = (byte)(point.Color.X * 255);
-                        byte g = (byte)(point.Color.Y * 255);
-                        byte b = (byte)(point.Color.Z * 255);
-
-                        int offset = y * stride + x * 4;
-                        ptr[offset + 0] = b;     // B
-                        ptr[offset + 1] = g;     // G
-                        ptr[offset + 2] = r;     // R
-                        ptr[offset + 3] = 255;   // A
-                    }
-                }
-            }
-
-            FractalImage.Source = bitmap;
+            // TODO: remove — mock clients for UI preview
+            ClientsPanel.OnClientConnected("client-1", "192.168.1.10");
+            ClientsPanel.OnClientConnected("client-2", "192.168.1.11");
         }
-        finally
+        else
         {
-            GenerateButton.IsEnabled = true;
-            GenerateButton.Content = "Generate";
+            SetSidebarVisible(false);
+            var view = new ClientView(serverAddress);
+            ContentArea.Content = view;
+            view.StartMockClient(); // TODO: replace with real TCP client
         }
+    }
+
+    public void NavigateToConnect()
+    {
+        SetSidebarVisible(false);
+        SetConsoleVisible(false);
+        ContentArea.Content = new ConnectView();
+    }
+
+    public void Log(string message)
+    {
+        string line = $"[{DateTime.Now:HH:mm:ss}] {message}";
+        LogTextBox.Text = string.IsNullOrEmpty(LogTextBox.Text)
+            ? line
+            : LogTextBox.Text + Environment.NewLine + line;
+        LogTextBox.CaretIndex = LogTextBox.Text.Length;
+    }
+
+    private void SetConsoleVisible(bool visible)
+    {
+        ConsoleBorder.IsVisible   = visible;
+        ConsoleSplitter.IsVisible = visible;
+        RootGrid.RowDefinitions[1].Height = visible ? new GridLength(5) : new GridLength(0);
+        RootGrid.RowDefinitions[2].Height = visible ? new GridLength(150) : new GridLength(0);
+    }
+
+    private void SetSidebarVisible(bool visible)
+    {
+        ClientsSidebarBorder.IsVisible = visible;
+        ClientsSplitter.IsVisible      = visible;
+        ContentGrid.ColumnDefinitions[1].Width = visible ? new GridLength(5) : new GridLength(0);
+        ContentGrid.ColumnDefinitions[2].Width = visible ? new GridLength(180) : new GridLength(0);
+    }
+
+    public RenderView NavigateToRender(bool isServerMode, int totalFrames)
+    {
+        var view = new RenderView(isServerMode, totalFrames);
+        SetConsoleVisible(true);
+        ContentArea.Content = view;
+        view.StartMockRender(); // TODO: replace with real scheduler when network is wired up
+        return view;
     }
 }

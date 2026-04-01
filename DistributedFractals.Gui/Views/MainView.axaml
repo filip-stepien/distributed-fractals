@@ -1,0 +1,341 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DistributedFractals.Gui.Views.MainView"
+             Background="{StaticResource AppBgBrush}">
+
+    <Grid RowDefinitions="48,*">
+
+        <!-- ═══ TOP BAR ════════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="0"
+                Background="{StaticResource AppSurfaceBrush}"
+                BorderBrush="{StaticResource AppBorderBrush}"
+                BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,*,Auto" Margin="16,0">
+                <!-- Left: back button + title + mode badge -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <Button Content="&#x2B9C;"
+                            Classes="icon"
+                            FontWeight="Bold"
+                            Click="OnBackClick"
+                            ToolTip.Tip="Back to connection screen" />
+                    <TextBlock Text="Distributed Fractals"
+                               FontSize="14" FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource AppTextBrush}" />
+                </StackPanel>
+                <!-- Right: Start Render -->
+                <Button Grid.Column="2"
+                        Content="▶&#x2004;&#x2004;Start Render"
+                        Classes="render"
+                        VerticalAlignment="Center"
+                        Click="OnRenderClick" />
+            </Grid>
+        </Border>
+
+        <!-- ═══ MAIN CONTENT ══════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260" />
+                <ColumnDefinition Width="5" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="5" />
+                <ColumnDefinition Width="240" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Left settings panel -->
+            <Border Grid.Column="0"
+                    Background="{StaticResource AppSurfaceBrush}"
+                    BorderBrush="{StaticResource AppBorderBrush}"
+                    BorderThickness="0,0,1,0">
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="16" Spacing="24">
+
+                        <!-- Section: Fractal -->
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="FRACTAL"
+                                       FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
+                                       Foreground="{StaticResource AppTextMutedBrush}" />
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Type" FontSize="13"
+                                           Foreground="{StaticResource AppTextBrush}" />
+                                <ComboBox x:Name="FractalTypeCombo"
+                                          HorizontalAlignment="Stretch"
+                                          SelectedIndex="0">
+                                    <ComboBoxItem Content="Mandelbrot" />
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Width" FontSize="13"
+                                           Foreground="{StaticResource AppTextBrush}" />
+                                <NumericUpDown x:Name="WidthInput"
+                                               Value="800" Minimum="100" Maximum="4096"
+                                               Increment="100" FormatString="0" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Height" FontSize="13"
+                                           Foreground="{StaticResource AppTextBrush}" />
+                                <NumericUpDown x:Name="HeightInput"
+                                               Value="600" Minimum="100" Maximum="4096"
+                                               Increment="100" FormatString="0" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Max Iterations" FontSize="13"
+                                           Foreground="{StaticResource AppTextBrush}" />
+                                <NumericUpDown x:Name="MaxIterationsInput"
+                                               Value="500" Minimum="10" Maximum="100000"
+                                               Increment="100" FormatString="0" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Colorizer" FontSize="13"
+                                           Foreground="{StaticResource AppTextBrush}" />
+                                <ComboBox x:Name="ColorizerCombo"
+                                          HorizontalAlignment="Stretch"
+                                          SelectedIndex="0">
+                                    <ComboBoxItem Content="Black &amp; White" />
+                                    <ComboBoxItem Content="Cycling HSV" />
+                                </ComboBox>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Divider -->
+                        <Border Height="1" Background="{StaticResource AppBorderBrush}" />
+
+                        <!-- Section: Animation -->
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="ANIMATION"
+                                       FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
+                                       Foreground="{StaticResource AppTextMutedBrush}" />
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Total Frames" FontSize="13"
+                                           Foreground="{StaticResource AppTextBrush}" />
+                                <NumericUpDown x:Name="TotalFramesInput"
+                                               Value="120" Minimum="2" Maximum="1000000"
+                                               Increment="10" FormatString="0" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Frame Rate" FontSize="13"
+                                           Foreground="{StaticResource AppTextBrush}" />
+                                <NumericUpDown x:Name="FrameRateInput"
+                                               Value="24" Minimum="1" Maximum="60"
+                                               Increment="1" FormatString="0" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Interpolation" FontSize="13"
+                                           Foreground="{StaticResource AppTextBrush}" />
+                                <ComboBox x:Name="InterpolationCombo"
+                                          HorizontalAlignment="Stretch"
+                                          SelectedIndex="1">
+                                    <ComboBoxItem Content="Linear" />
+                                    <ComboBoxItem Content="Smooth Step" />
+                                </ComboBox>
+                            </StackPanel>
+
+                        </StackPanel>
+
+                        <!-- Divider -->
+                        <Border Height="1" Background="{StaticResource AppBorderBrush}" />
+
+                        <!-- Section: Render -->
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="RENDER"
+                                       FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
+                                       Foreground="{StaticResource AppTextMutedBrush}" />
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Frames Per Client" FontSize="13"
+                                           Foreground="{StaticResource AppTextBrush}" />
+                                <NumericUpDown x:Name="FramesPerClientInput"
+                                               Value="1" Minimum="1" Maximum="32"
+                                               Increment="1" FormatString="0" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Client Selection Strategy" FontSize="13"
+                                           Foreground="{StaticResource AppTextBrush}" />
+                                <ComboBox x:Name="WorkerSelectorCombo"
+                                          HorizontalAlignment="Stretch"
+                                          SelectedIndex="0">
+                                    <ComboBoxItem Content="Round Robin" />
+                                </ComboBox>
+                            </StackPanel>
+                        </StackPanel>
+
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Vertical divider -->
+            <GridSplitter Grid.Column="1"
+                          ResizeDirection="Columns"
+                          Background="{StaticResource AppBorderBrush}"
+                          HorizontalAlignment="Stretch"
+                          Cursor="SizeWestEast" />
+
+            <!-- Center: Fractal canvas -->
+            <Grid Grid.Column="2" Background="{StaticResource AppBgBrush}">
+                <Image x:Name="FractalImage" Stretch="Uniform" />
+                <!-- Render loader overlay -->
+                <Border x:Name="RenderOverlay"
+                        IsVisible="False"
+                        Background="#99111318">
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="12">
+                        <ProgressBar IsIndeterminate="True"
+                                     Width="160" Height="4" />
+                        <TextBlock Text="Rendering..."
+                                   FontSize="13"
+                                   Foreground="{StaticResource AppTextMutedBrush}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+                <TextBlock x:Name="NoKeyframePlaceholder"
+                           Text="Select a keyframe to preview"
+                           FontSize="15"
+                           Foreground="{StaticResource AppTextMutedBrush}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           IsVisible="True" />
+                <!-- Selection hint banner -->
+                <Border x:Name="SelectionHintBanner"
+                        IsVisible="False"
+                        VerticalAlignment="Bottom"
+                        Background="#DD1C1F26"
+                        BorderBrush="{StaticResource AppBorderBrush}"
+                        BorderThickness="0,1,0,0"
+                        Padding="16,10"
+                        ZIndex="10">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock Text="Drag to select an area on the preview to set keyframe bounds"
+                                       FontSize="12"
+                                       Foreground="{StaticResource AppTextBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Content="Cancel"
+                                Classes="accent"
+                                FontSize="12"
+                                Padding="12,4"
+                                Click="OnCancelSelectionClick" />
+                    </Grid>
+                </Border>
+
+                <Canvas x:Name="SelectionCanvas"
+                        Background="Transparent"
+                        PointerPressed="OnCanvasPointerPressed"
+                        PointerMoved="OnCanvasPointerMoved"
+                        PointerReleased="OnCanvasPointerReleased">
+                    <Rectangle x:Name="SelectionRect"
+                               IsVisible="False"
+                               Stroke="#FF4A9EFF"
+                               StrokeThickness="1.5"
+                               StrokeDashArray="6,3"
+                               Fill="#224A9EFF" />
+                </Canvas>
+            </Grid>
+
+            <!-- Vertical divider -->
+            <GridSplitter Grid.Column="3"
+                          ResizeDirection="Columns"
+                          Background="{StaticResource AppBorderBrush}"
+                          HorizontalAlignment="Stretch"
+                          Cursor="SizeWestEast" />
+
+            <!-- Right: Keyframes panel -->
+            <Border Grid.Column="4"
+                    Background="{StaticResource AppSurfaceBrush}"
+                    BorderBrush="{StaticResource AppBorderBrush}"
+                    BorderThickness="0,0,0,0">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled">
+                <Grid RowDefinitions="Auto,Auto,*">
+
+                    <!-- Tab title + options -->
+                    <Border Grid.Row="0"
+                            BorderBrush="{StaticResource AppBorderBrush}"
+                            BorderThickness="0,0,0,1"
+                            Padding="16,12">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="Keyframes"
+                                       FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{StaticResource AppTextBrush}" />
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Button Content="Add default"
+                                        Classes="panel-action"
+                                        Click="OnAddDefaultKeyframeClick"
+                                        ToolTip.Tip="Add default full view keyframe" />
+                                <Button x:Name="AddKeyframeButton"
+                                        Content="From selection..."
+                                        Classes="panel-action"
+                                        IsEnabled="False"
+                                        Click="OnAddKeyframeClick"
+                                        ToolTip.Tip="Select area on preview to add keyframe" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Manual keyframe entry -->
+                    <Border Grid.Row="1"
+                            BorderBrush="{StaticResource AppBorderBrush}"
+                            BorderThickness="0,0,0,1"
+                            Padding="16,14">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="MANUAL KEYFRAME"
+                                       FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
+                                       Foreground="{StaticResource AppTextMutedBrush}" />
+                            <Grid ColumnDefinitions="*,8,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Re" FontSize="12" Foreground="{StaticResource AppTextMutedBrush}" />
+                                    <TextBox x:Name="ManualReInput" Text="-0.75" FontSize="12" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="Im" FontSize="12" Foreground="{StaticResource AppTextMutedBrush}" />
+                                    <TextBox x:Name="ManualImInput" Text="0" FontSize="12" />
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Scale" FontSize="12" Foreground="{StaticResource AppTextMutedBrush}" />
+                                <TextBox x:Name="ManualScaleInput" Text="1.0" FontSize="12" />
+                            </StackPanel>
+                            <Button Content="Add Keyframe"
+                                    Classes="panel-action"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center"
+                                    Click="OnAddManualKeyframeClick" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Keyframes list -->
+                    <Grid Grid.Row="2">
+                        <TextBlock x:Name="KeyframesEmptyText"
+                                   Text="No keyframes added yet."
+                                   TextAlignment="Center"
+                                   FontSize="12"
+                                   Foreground="{StaticResource AppTextMutedBrush}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   IsVisible="True" />
+                        <ScrollViewer>
+                            <StackPanel x:Name="KeyframesList" Spacing="1" />
+                        </ScrollViewer>
+                    </Grid>
+
+                </Grid>
+                </ScrollViewer>
+            </Border>
+
+        </Grid>
+
+
+    </Grid>
+</UserControl>

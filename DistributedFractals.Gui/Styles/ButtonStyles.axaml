@@ -1,0 +1,200 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Suppress Fluent hover tint on Image -->
+    <Style Selector="Image">
+        <Setter Property="IsHitTestVisible" Value="False" />
+    </Style>
+
+    <!-- Pointer cursor on all buttons -->
+    <Style Selector="Button">
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style Selector="Button.accent">
+        <Setter Property="Background" Value="#FF4A9EFF" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.accent:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#FF6AB4FF" />
+    </Style>
+    <Style Selector="Button.accent:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="#FF3080D0" />
+    </Style>
+
+    <Style Selector="Button.danger">
+        <Setter Property="Background" Value="#FF9B3C3C" />
+        <Setter Property="Foreground" Value="#FFFFCCCC" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#FFAD4545" />
+    </Style>
+    <Style Selector="Button.danger:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="#FFBE4E4E" />
+    </Style>
+
+    <Style Selector="Button.muted">
+        <Setter Property="Background" Value="#FF1C1F26" />
+        <Setter Property="Foreground" Value="#FF6B7280" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="#FF2A2D35" />
+    </Style>
+    <Style Selector="Button.muted:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#FF252830" />
+    </Style>
+
+    <Style Selector="Button.panel-action">
+        <Setter Property="Background" Value="#FF2A2D35" />
+        <Setter Property="Foreground" Value="#FFE2E8F0" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="Button.panel-action:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#FF353840" />
+    </Style>
+
+    <Style Selector="Button.render">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#FF22C55E" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Padding" Value="12,8" />
+    </Style>
+    <Style Selector="Button.render:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#1422C55E" />
+    </Style>
+    <Style Selector="Button.render:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="#2522C55E" />
+    </Style>
+
+    <Style Selector="Button.collapse">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#FF6B7280" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0,4" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.collapse:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="TextElement.Foreground" Value="#FFE2E8F0" />
+    </Style>
+
+    <Style Selector="Button.icon">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#FF6B7280" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="6" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MinHeight" Value="0" />
+    </Style>
+    <Style Selector="Button.icon:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#22FFFFFF" />
+    </Style>
+
+    <!-- Fix vertical text alignment on macOS -->
+    <Style Selector="NumericUpDown">
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton">
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#18FFFFFF" />
+    </Style>
+    <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="#28FFFFFF" />
+    </Style>
+    <Style Selector="ComboBox">
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="ComboBoxItem">
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="ComboBox /template/ ContentControl#ContentPresenter">
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBox">
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Background" Value="#FF111318" />
+        <Setter Property="BorderBrush" Value="#FF2A2D35" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="#FFE2E8F0" />
+    </Style>
+    <Style Selector="TextBox /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="#FF111318" />
+        <Setter Property="BorderBrush" Value="#FF2A2D35" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="#FF111318" />
+        <Setter Property="BorderBrush" Value="#FF2A2D35" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="#FF111318" />
+        <Setter Property="BorderBrush" Value="#FF2A2D35" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style Selector="NumericUpDown">
+        <Setter Property="Background" Value="#FF111318" />
+        <Setter Property="BorderBrush" Value="#FF2A2D35" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="#FFE2E8F0" />
+    </Style>
+    <Style Selector="NumericUpDown /template/ ButtonSpinner">
+        <Setter Property="Background" Value="#FF111318" />
+        <Setter Property="BorderBrush" Value="#FF2A2D35" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ Border">
+        <Setter Property="Background" Value="#FF111318" />
+        <Setter Property="BorderBrush" Value="#FF2A2D35" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="NumericUpDown:focus-within /template/ ButtonSpinner /template/ Border">
+        <Setter Property="Background" Value="#FF111318" />
+        <Setter Property="BorderBrush" Value="#FF2A2D35" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ TextBox">
+        <Setter Property="Background" Value="#FF111318" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style Selector="ComboBox">
+        <Setter Property="Background" Value="#FF111318" />
+        <Setter Property="BorderBrush" Value="#FF2A2D35" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="#FFE2E8F0" />
+    </Style>
+    <Style Selector="ComboBox /template/ Border">
+        <Setter Property="Background" Value="#FF111318" />
+        <Setter Property="BorderBrush" Value="#FF2A2D35" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="ComboBox:pointerover /template/ Border">
+        <Setter Property="Background" Value="#FF111318" />
+        <Setter Property="BorderBrush" Value="#FF2A2D35" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="ComboBox:focus /template/ Border">
+        <Setter Property="Background" Value="#FF111318" />
+        <Setter Property="BorderBrush" Value="#FF2A2D35" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="ComboBox:focus-within /template/ Border">
+        <Setter Property="Background" Value="#FF111318" />
+        <Setter Property="BorderBrush" Value="#FF2A2D35" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+</Styles>
