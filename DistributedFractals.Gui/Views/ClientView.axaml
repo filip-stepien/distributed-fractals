@@ -1,0 +1,92 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DistributedFractals.Gui.Views.ClientView"
+             Background="{StaticResource AppBgBrush}">
+
+    <Grid RowDefinitions="48,*,Auto">
+
+        <!-- ═══ TOP BAR ════════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="0"
+                Background="{StaticResource AppSurfaceBrush}"
+                BorderBrush="{StaticResource AppBorderBrush}"
+                BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,*,Auto" Margin="16,0">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <Button Content="&#x2B9C;"
+                            Classes="icon"
+                            FontWeight="Bold"
+                            Click="OnBackClick"
+                            ToolTip.Tip="Disconnect from server" />
+                    <TextBlock Text="Distributed Fractals"
+                               FontSize="14" FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource AppTextBrush}" />
+                </StackPanel>
+
+                <!-- Connection status -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <Ellipse x:Name="ConnectionDot"
+                             Width="8" Height="8"
+                             Margin="0,2,0,0" />
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <TextBlock x:Name="ConnectionLabel"
+                                   Text="Connected to"
+                                   FontSize="12" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" />
+                        <TextBlock x:Name="ConnectionText"
+                                   FontSize="12" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ═══ CENTER: last frame preview ════════════════════════════════════════ -->
+        <Grid Grid.Row="1" Background="{StaticResource AppBgBrush}">
+            <Image x:Name="FramePreview" Stretch="Uniform" />
+
+<TextBlock x:Name="PlaceholderText"
+                       Text="Waiting for jobs..."
+                       FontSize="15"
+                       Foreground="{StaticResource AppTextMutedBrush}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       IsVisible="True" />
+        </Grid>
+
+        <!-- ═══ BOTTOM BAR ════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="2"
+                Background="{StaticResource AppSurfaceBrush}"
+                BorderBrush="{StaticResource AppBorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="16,10">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+
+                <!-- Status dot + label -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Ellipse x:Name="StatusDot"
+                             Width="10" Height="10"
+                             Fill="{StaticResource AppTextMutedBrush}" />
+                    <TextBlock x:Name="StatusText"
+                               Text="Idle"
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="{StaticResource AppTextBrush}"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+
+                <!-- Current job -->
+                <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center" MinWidth="100">
+                    <TextBlock Text="CURRENT JOB"
+                               FontSize="10" FontWeight="SemiBold" LetterSpacing="1"
+                               Foreground="{StaticResource AppTextMutedBrush}" />
+                    <TextBlock x:Name="CurrentFrameText"
+                               Text="—"
+                               FontSize="11"
+Foreground="{StaticResource AppTextBrush}" />
+                </StackPanel>
+
+            </Grid>
+        </Border>
+
+    </Grid>
+</UserControl>

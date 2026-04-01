@@ -1,0 +1,78 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DistributedFractals.Gui.Views.RenderView"
+             Background="{StaticResource AppBgBrush}">
+
+    <Grid RowDefinitions="48,*,Auto">
+
+        <!-- ═══ TOP BAR ════════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="0"
+                Background="{StaticResource AppSurfaceBrush}"
+                BorderBrush="{StaticResource AppBorderBrush}"
+                BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,*" Margin="16,0">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <Button Content="&#x2B9C;"
+                            FontWeight="Bold"
+                            Classes="icon"
+                            Click="OnBackClick"
+                            ToolTip.Tip="Back to keyframe editor" />
+                    <TextBlock Text="Rendering"
+                               FontSize="14" FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource AppTextBrush}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ═══ CLIENT CARDS ══════════════════════════════════════════════════════ -->
+        <ScrollViewer Grid.Row="1"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <WrapPanel x:Name="ClientCardsPanel" Margin="12" />
+        </ScrollViewer>
+
+        <!-- ═══ BOTTOM BAR: progress + controls ══════════════════════════════════ -->
+        <Border Grid.Row="2"
+                Background="{StaticResource AppSurfaceBrush}"
+                BorderBrush="{StaticResource AppBorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="16,10">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled">
+            <Grid ColumnDefinitions="Auto,*,Auto,12,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Ellipse x:Name="ProgressDot" Width="10" Height="10"
+                             Fill="{StaticResource AppAccentBrush}" />
+                    <TextBlock x:Name="ProgressStatusText" Text="Rendering..."
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="{StaticResource AppTextBrush}"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+
+                <ProgressBar x:Name="OverallProgress"
+                             Grid.Column="1"
+                             Minimum="0" Value="0"
+                             Height="6"
+                             Margin="16,0"
+                             VerticalAlignment="Center" />
+
+                <TextBlock x:Name="ProgressText"
+                           Grid.Column="2"
+                           FontSize="13"
+                           Foreground="{StaticResource AppTextMutedBrush}"
+                           VerticalAlignment="Center" />
+
+                <Button Grid.Column="4"
+                        x:Name="CancelButton"
+                        Content="Cancel"
+                        Classes="danger"
+                        Padding="16,6"
+                        FontSize="13"
+                        Click="OnCancelClick" />
+            </Grid>
+            </ScrollViewer>
+        </Border>
+
+    </Grid>
+</UserControl>

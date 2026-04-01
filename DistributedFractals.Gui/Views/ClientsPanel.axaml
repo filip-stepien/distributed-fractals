@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DistributedFractals.Gui.Views.ClientsPanel"
+             Background="{StaticResource AppSurfaceBrush}">
+
+    <Grid RowDefinitions="48,*" MinWidth="140">
+
+        <!-- Header — 48px matches main top bar -->
+        <Border Grid.Row="0"
+                BorderBrush="{StaticResource AppBorderBrush}"
+                BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="*,Auto" Margin="16,0">
+                <TextBlock Grid.Column="0"
+                           Text="Clients"
+                           FontSize="14" FontWeight="SemiBold"
+                           Foreground="{StaticResource AppTextBrush}"
+                           VerticalAlignment="Center" />
+                <Border Grid.Column="1"
+                        x:Name="CountBadge"
+                        CornerRadius="10"
+                        Padding="8,3"
+                        VerticalAlignment="Center"
+                        Background="{StaticResource AppBorderBrush}">
+                    <TextBlock x:Name="CountText"
+                               Text="0"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{StaticResource AppTextMutedBrush}" />
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Client list -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="ClientList">
+                <TextBlock x:Name="EmptyText"
+                           Text="No clients connected"
+                           FontSize="12"
+                           Foreground="{StaticResource AppTextMutedBrush}"
+                           HorizontalAlignment="Center"
+                           Margin="0,24,0,0" />
+            </StackPanel>
+        </ScrollViewer>
+
+
+    </Grid>
+</UserControl>
