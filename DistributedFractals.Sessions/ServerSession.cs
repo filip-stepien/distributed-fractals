@@ -18,36 +18,36 @@ public sealed class ServerSession : IServerSession
     private int _fps;
     private VideoFormat _outputFormat;
 
-    public event Action<Guid, string>? ClientConnected;
-    public event Action<Guid>? ClientDisconnected;
-    public event Action<Guid, int>? FrameDispatched;
-    public event Action<Guid, int, TimeSpan>? FrameCompleted;
-    public event Action<Guid, int>? FrameFailed;
+    public event Action<ClientIdentifier>? ClientConnected;
+    public event Action<ClientIdentifier>? ClientDisconnected;
+    public event Action<ClientIdentifier, int>? FrameDispatched;
+    public event Action<ClientIdentifier, int, TimeSpan>? FrameCompleted;
+    public event Action<ClientIdentifier, int>? FrameFailed;
     public event Action? RenderCompleted;
 
-    private void OnClientRegistered(Guid id)
+    private void OnClientRegistered(ClientIdentifier client)
     {
-        ClientConnected?.Invoke(id, id.ToString());
+        ClientConnected?.Invoke(client);
     }
 
-    private void OnClientUnregistered(Guid id)
+    private void OnClientUnregistered(ClientIdentifier client)
     {
-        ClientDisconnected?.Invoke(id);
+        ClientDisconnected?.Invoke(client);
     }
 
-    private void OnFrameDispatched(Guid clientId, int frameIndex)
+    private void OnFrameDispatched(ClientIdentifier client, int frameIndex)
     {
-        FrameDispatched?.Invoke(clientId, frameIndex);
+        FrameDispatched?.Invoke(client, frameIndex);
     }
 
-    private void OnFrameCompleted(Guid clientId, int frameIndex, TimeSpan duration)
+    private void OnFrameCompleted(ClientIdentifier client, int frameIndex, TimeSpan duration)
     {
-        FrameCompleted?.Invoke(clientId, frameIndex, duration);
+        FrameCompleted?.Invoke(client, frameIndex, duration);
     }
 
-    private void OnFrameFailed(Guid clientId, int frameIndex)
+    private void OnFrameFailed(ClientIdentifier client, int frameIndex)
     {
-        FrameFailed?.Invoke(clientId, frameIndex);
+        FrameFailed?.Invoke(client, frameIndex);
     }
 
     private void OnRenderCompleted()
@@ -69,7 +69,7 @@ public sealed class ServerSession : IServerSession
         {
             await writer.WriteFrameAsync(frame);
         }
-        
+
         await writer.DisposeAsync();
     }
 
@@ -95,11 +95,11 @@ public sealed class ServerSession : IServerSession
         );
     }
 
-    public Task StartAsync(ConnectionSettings conn)
+    public Task StartAsync(ConnectionSettings connectionSettings)
     {
-        ITransportFactory factory = TransportFactoryResolver.FromConnectionSettings(conn);
+        ITransportFactory factory = TransportFactoryResolver.FromConnectionSettings(connectionSettings);
 
-        _server = new HeartbeatMessageServer(factory.CreateServer(), conn.ClientTimeout);
+        _server = new HeartbeatMessageServer(factory.CreateServer(), connectionSettings.ClientTimeout);
 
         _server.ClientRegistered += OnClientRegistered;
         _server.ClientUnregistered += OnClientUnregistered;
@@ -107,22 +107,22 @@ public sealed class ServerSession : IServerSession
         return _server.StartAsync();
     }
 
-    public Task StartRenderAsync(RenderSettings settings)
+    public Task StartRenderAsync(RenderSettings renderSettings)
     {
         if (_server is null)
         {
             throw new InvalidOperationException("Call StartAsync first.");
         }
 
-        _outputPath = settings.OutputPath;
-        _fps = settings.Fps;
-        _outputFormat = settings.OutputFormat;
+        _outputPath = renderSettings.OutputPath;
+        _fps = renderSettings.Fps;
+        _outputFormat = renderSettings.OutputFormat;
 
         _scheduler = new FrameScheduler(
-            server: _server, 
-            frames: BuildFrames(settings), 
-            clientSelector: settings.ClientSelector, 
-            framesPerClient: settings.FramesPerClient
+            server: _server,
+            frames: BuildFrames(renderSettings),
+            clientSelector: renderSettings.ClientSelector,
+            framesPerClient: renderSettings.FramesPerClient
         );
 
         _scheduler.FrameDispatched += OnFrameDispatched;
@@ -136,7 +136,7 @@ public sealed class ServerSession : IServerSession
         _server.ClientRegistered += _scheduler.OnClientAvailable;
         _server.ClientUnregistered += _scheduler.OnClientFailed;
 
-        foreach (Guid client in _server.Clients)
+        foreach (ClientIdentifier client in _server.Clients)
         {
             _scheduler.OnClientAvailable(client);
         }

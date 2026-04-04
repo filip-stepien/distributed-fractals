@@ -4,14 +4,14 @@ namespace DistributedFractals.Server.Core;
 
 public interface IMessageServer : IMessageNode
 {
-    IReadOnlyCollection<Guid> Clients { get; }
+    IReadOnlyCollection<ClientIdentifier> Clients { get; }
 
-    event Action<Guid>? ClientRegistered;
-    event Action<Guid>? ClientUnregistered;
+    event Action<ClientIdentifier>? ClientRegistered;
+    event Action<ClientIdentifier>? ClientUnregistered;
 
-    void RegisterClient(Guid client);
-    void UnregisterClient(Guid client);
+    void RegisterClient(ClientIdentifier client);
+    void UnregisterClient(ClientIdentifier client);
 
-    Task SendToClientAsync(Guid clientIdentifier, BaseMessage baseMessage);
-    Task BroadcastAsync(BaseMessage baseMessage);
+    Task SendToClientAsync(ClientIdentifier client, BaseMessage message);
+    Task BroadcastAsync(BaseMessage message);
 }

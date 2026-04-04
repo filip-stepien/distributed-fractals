@@ -29,7 +29,7 @@ client.MessageReceived += async message =>
 };
 
 await client.StartAsync();
-await client.SendToServerAsync(new JoinMessage(client.Identifier));
+await client.SendToServerAsync(new JoinMessage(client.Identifier, "TestClient"));
 
 Console.WriteLine("[WORKER] Joined. Press Enter to quit.");
 

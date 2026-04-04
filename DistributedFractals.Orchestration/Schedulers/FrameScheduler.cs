@@ -13,14 +13,14 @@ public sealed class FrameScheduler : IFrameScheduler
     private readonly int _totalFrames;
 
     private readonly Queue<RenderFrameMessage> _pending;
-    private readonly Dictionary<Guid, List<(RenderFrameMessage msg, DateTime dispatchedAt)>> _inFlight = new();
+    private readonly Dictionary<ClientIdentifier, List<(RenderFrameMessage msg, DateTime dispatchedAt)>> _inFlight = new();
     private readonly SortedDictionary<int, FractalResult> _completed = new();
     private readonly object _lock = new();
     private readonly TaskCompletionSource _allDone = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    public event Action<Guid, int>? FrameDispatched;
-    public event Action<Guid, int, TimeSpan>? FrameCompleted;
-    public event Action<Guid, int>? FrameFailed;
+    public event Action<ClientIdentifier, int>? FrameDispatched;
+    public event Action<ClientIdentifier, int, TimeSpan>? FrameCompleted;
+    public event Action<ClientIdentifier, int>? FrameFailed;
     public event Action? RenderCompleted;
 
     public FrameScheduler(
@@ -60,7 +60,7 @@ public sealed class FrameScheduler : IFrameScheduler
         }
     }
 
-    public void OnClientAvailable(Guid client)
+    public void OnClientAvailable(ClientIdentifier client)
     {
         lock (_lock)
         {
@@ -69,22 +69,26 @@ public sealed class FrameScheduler : IFrameScheduler
         }
     }
 
-    public void OnResultReceived(Guid client, int frameIndex, FractalResult result)
+    public void OnResultReceived(Guid clientId, int frameIndex, FractalResult result)
     {
         lock (_lock)
         {
-            DateTime dispatchedAt = default;
-            if (_inFlight.TryGetValue(client, out List<(RenderFrameMessage msg, DateTime dispatchedAt)>? frames))
+            ClientIdentifier? client = _inFlight.Keys.FirstOrDefault(c => c.Id == clientId);
+            if (client is null)
             {
-                (RenderFrameMessage msg, DateTime dispatchedAt) match = frames.FirstOrDefault(f => f.msg.FrameIndex == frameIndex);
-                dispatchedAt = match.dispatchedAt;
-                frames.RemoveAll(f => f.msg.FrameIndex == frameIndex);
+                return;
             }
+
+            DateTime dispatchedAt = default;
+            List<(RenderFrameMessage msg, DateTime dispatchedAt)> frames = _inFlight[client];
+            (RenderFrameMessage msg, DateTime dispatchedAt) match = frames.FirstOrDefault(f => f.msg.FrameIndex == frameIndex);
+            dispatchedAt = match.dispatchedAt;
+            frames.RemoveAll(f => f.msg.FrameIndex == frameIndex);
 
             TimeSpan duration = dispatchedAt != default ? DateTime.UtcNow - dispatchedAt : TimeSpan.Zero;
 
             _completed[frameIndex] = result;
-            Console.WriteLine($"[MASTER] Frame {frameIndex} received from client {client} ({_completed.Count}/{_totalFrames}).");
+            Console.WriteLine($"[MASTER] Frame {frameIndex} received from client {client.DisplayName} ({_completed.Count}/{_totalFrames}).");
             FrameCompleted?.Invoke(client, frameIndex, duration);
 
             if (_completed.Count == _totalFrames)
@@ -98,7 +102,7 @@ public sealed class FrameScheduler : IFrameScheduler
         }
     }
 
-    public void OnClientFailed(Guid client)
+    public void OnClientFailed(ClientIdentifier client)
     {
         lock (_lock)
         {
@@ -106,7 +110,7 @@ public sealed class FrameScheduler : IFrameScheduler
             {
                 foreach ((RenderFrameMessage msg, DateTime dispatchedAt) frame in frames)
                 {
-                    Console.WriteLine($"[MASTER] Re-queuing frame {frame.msg.FrameIndex} after client {client} failed.");
+                    Console.WriteLine($"[MASTER] Re-queuing frame {frame.msg.FrameIndex} after client {client.DisplayName} failed.");
                     _pending.Enqueue(frame.msg);
                     FrameFailed?.Invoke(client, frame.msg.FrameIndex);
                 }
@@ -120,22 +124,22 @@ public sealed class FrameScheduler : IFrameScheduler
     {
         while (_pending.Count > 0)
         {
-            List<Guid> workersWithCapacity = _inFlight
+            List<ClientIdentifier> clientsWithCapacity = _inFlight
                 .Where(kv => kv.Value.Count < _framesPerClient)
                 .Select(kv => kv.Key)
                 .ToList();
 
-            Guid? client = _clientSelector.Select(workersWithCapacity);
+            ClientIdentifier? client = _clientSelector.Select(clientsWithCapacity);
             if (client is null)
             {
                 break;
             }
 
             RenderFrameMessage msg = _pending.Dequeue();
-            _inFlight[client.Value].Add((msg, DateTime.UtcNow));
-            Console.WriteLine($"[MASTER] Sending frame {msg.FrameIndex} to client {client.Value}.");
-            FrameDispatched?.Invoke(client.Value, msg.FrameIndex);
-            _ = _server.SendToClientAsync(client.Value, msg);
+            _inFlight[client].Add((msg, DateTime.UtcNow));
+            Console.WriteLine($"[MASTER] Sending frame {msg.FrameIndex} to client {client.DisplayName}.");
+            FrameDispatched?.Invoke(client, msg.FrameIndex);
+            _ = _server.SendToClientAsync(client, msg);
         }
     }
 }

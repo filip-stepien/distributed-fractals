@@ -54,9 +54,9 @@ public sealed class ClientSession : IClientSession
         }
     }
 
-    public async Task ConnectAsync(ConnectionSettings conn)
+    public async Task ConnectAsync(string displayName, ConnectionSettings connectionSettings)
     {
-        ITransportFactory factory = TransportFactoryResolver.FromConnectionSettings(conn);
+        ITransportFactory factory = TransportFactoryResolver.FromConnectionSettings(connectionSettings);
 
         _client = factory.CreateClient();
 
@@ -74,12 +74,12 @@ public sealed class ClientSession : IClientSession
         };
 
         await _client.StartAsync();
-        await _client.SendToServerAsync(new JoinMessage(_client.Identifier));
+        await _client.SendToServerAsync(new JoinMessage(_client.Identifier, displayName));
 
         Connected?.Invoke();
 
         _heartbeatTokenSource = new CancellationTokenSource();
-        _ = StartHeartbeatLoopAsync(conn.HeartbeatInterval, _heartbeatTokenSource.Token);
+        _ = StartHeartbeatLoopAsync(connectionSettings.HeartbeatInterval, _heartbeatTokenSource.Token);
     }
 
     public async ValueTask DisposeAsync()
