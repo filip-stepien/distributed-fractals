@@ -22,7 +22,7 @@ List<ZoomKeyframe> keyframes =
     new ZoomKeyframe(T: 1.0, CenterRe: -0.74529, CenterIm:  0.1130, Scale: 0.001),
 ];
 
-IReadOnlyList<MandelbrotOptions> zoomFrames = new KeyframeZoomSequenceGenerator<MandelbrotOptions>()
+List<FrameBounds> frameBounds = new KeyframeZoomSequenceGenerator()
     .Generate(baseOptions, keyframes, totalFrames: 120, new SmoothStepInterpolation())
     .ToList();
 
@@ -30,16 +30,17 @@ HeartbeatMessageServer master = new(new TcpTransportFactory(
     IPAddress.Loopback, 3000, new JsonSerializer()
 ).CreateServer(), TimeSpan.FromSeconds(30));
 
-var frames = zoomFrames
-    .Select((opts, i) => (i, new RenderFractalMessage(
+List<RenderFrameMessage> frames = frameBounds
+    .Select((bounds, i) => new RenderFrameMessage(
         master.Identifier,
         i,
         FractalGeneratorType.Mandelbrot,
         FractalColorizerType.CyclingHsv,
-        opts)))
+        baseOptions,
+        bounds))
     .ToList();
 
-FrameScheduler scheduler = new(master, frames, new RoundRobinClientSelector(), framesPerWorker: 1);
+FrameScheduler scheduler = new(master, frames, new RoundRobinClientSelector(), framesPerClient: 1);
 
 MessageDispatcher dispatcher = new();
 dispatcher.Register(new JoinMessageHandler(master));
@@ -73,7 +74,9 @@ string outputPath = Path.Combine(Path.GetTempPath(), "fractal_zoom.gif");
 GifVideoWriter videoWriter = new(outputPath, frameRate: 24, repeat: true);
 
 foreach (FractalResult frame in scheduler.GetOrderedResults())
+{
     await videoWriter.WriteFrameAsync(frame);
+}
 
 await videoWriter.DisposeAsync();
 Console.WriteLine($"[MASTER] GIF saved: {outputPath}");

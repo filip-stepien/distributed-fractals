@@ -1,17 +1,13 @@
 using DistributedFractals.Core.Core;
+using DistributedFractals.Core.Zoom;
 
 namespace DistributedFractals.Core.Generators.Mandelbrot;
 
 public record MandelbrotOptions(
     ulong Width,
     ulong Height,
-    ulong MaxIterations = 100,
-    double MinRe = -2.5,
-    double MaxRe =  1.0,
-    double MinIm = -1.2,
-    double MaxIm =  1.2
-) : IBoundedFractalOptions<MandelbrotOptions>
+    ulong MaxIterations = 100
+) : IFractalGeneratorOptions
 {
-    public MandelbrotOptions WithBounds(double minRe, double maxRe, double minIm, double maxIm)
-        => this with { MinRe = minRe, MaxRe = maxRe, MinIm = minIm, MaxIm = maxIm };
+    public FrameBounds DefaultBounds { get; } = new(-2.5, 1.0, -1.2, 1.2);
 }
