@@ -10,5 +10,5 @@ public interface IClientSession : IAsyncDisposable
     event Action<int, TimeSpan, FractalResult>? FrameCompleted;
     event Action<int>? FrameFailed;
 
-    Task ConnectAsync(ConnectionSettings conn);
+    Task ConnectAsync(string displayName, ConnectionSettings connectionSettings);
 }

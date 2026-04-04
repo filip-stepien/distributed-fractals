@@ -1,6 +1,8 @@
+using DistributedFractals.Server.Core;
+
 namespace DistributedFractals.Orchestration.Selectors;
 
 public interface IClientSelector
 {
-    Guid? Select(IReadOnlyList<Guid> workers);
+    ClientIdentifier? Select(IReadOnlyList<ClientIdentifier> clients);
 }

@@ -7,7 +7,7 @@ public class JoinMessageHandler(IMessageServer master) : IMessageHandler<JoinMes
 {
     public Task HandleAsync(JoinMessage message)
     {
-        master.RegisterClient(message.Sender);
+        master.RegisterClient(new ClientIdentifier(message.Sender, message.DisplayName));
         return Task.CompletedTask;
     }
 }

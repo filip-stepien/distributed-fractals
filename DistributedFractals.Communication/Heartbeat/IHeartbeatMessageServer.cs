@@ -4,5 +4,5 @@ namespace DistributedFractals.Server.Heartbeat;
 
 public interface IHeartbeatMessageServer : IMessageServer
 {
-    void RecordHeartbeat(Guid client);
+    void RecordHeartbeat(Guid clientId);
 }

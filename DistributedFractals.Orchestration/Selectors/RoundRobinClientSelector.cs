@@ -1,14 +1,20 @@
+using DistributedFractals.Server.Core;
+
 namespace DistributedFractals.Orchestration.Selectors;
 
 public sealed class RoundRobinClientSelector : IClientSelector
 {
     private int _index;
 
-    public Guid? Select(IReadOnlyList<Guid> workers)
+    public ClientIdentifier? Select(IReadOnlyList<ClientIdentifier> clients)
     {
-        if (workers.Count == 0) return null;
-        var selected = workers[_index % workers.Count];
-        _index = (_index + 1) % workers.Count;
+        if (clients.Count == 0)
+        {
+            return null;
+        }
+
+        ClientIdentifier selected = clients[_index % clients.Count];
+        _index = (_index + 1) % clients.Count;
         return selected;
     }
 }

@@ -15,9 +15,9 @@ public class TcpServer(IPAddress listenAddress, int port, ISerializer serializer
     private TcpListener? _listener;
     private CancellationTokenSource? _cts;
 
-    public override void UnregisterClient(Guid client)
+    public override void UnregisterClient(ClientIdentifier client)
     {
-        _streams.TryRemove(client, out _);
+        _streams.TryRemove(client.Id, out _);
         base.UnregisterClient(client);
     }
 
@@ -47,24 +47,24 @@ public class TcpServer(IPAddress listenAddress, int port, ISerializer serializer
         return ValueTask.CompletedTask;
     }
 
-    public override async Task SendToClientAsync(Guid clientIdentifier, BaseMessage baseMessage)
+    public override async Task SendToClientAsync(ClientIdentifier client, BaseMessage message)
     {
-        if (!Clients.Contains(clientIdentifier))
+        if (!Clients.Contains(client))
         {
-            throw new InvalidOperationException($"Worker '{clientIdentifier}' is not registered.");
+            throw new InvalidOperationException($"Client '{client.Id}' is not registered.");
         }
 
-        if (!_streams.TryGetValue(clientIdentifier, out TcpStream? stream))
+        if (!_streams.TryGetValue(client.Id, out TcpStream? stream))
         {
-            throw new InvalidOperationException($"Worker '{clientIdentifier}' stream is unknown.");
+            throw new InvalidOperationException($"Client '{client.Id}' stream is unknown.");
         }
 
-        await stream.WriteAsync(serializer.Serialize(baseMessage));
+        await stream.WriteAsync(serializer.Serialize(message));
     }
 
-    public override async Task BroadcastAsync(BaseMessage baseMessage)
+    public override async Task BroadcastAsync(BaseMessage message)
     {
-        ReadOnlyMemory<byte> data = serializer.Serialize(baseMessage);
+        ReadOnlyMemory<byte> data = serializer.Serialize(message);
         foreach (TcpStream stream in _streams.Values)
         {
             await stream.WriteAsync(data);
@@ -100,8 +100,8 @@ public class TcpServer(IPAddress listenAddress, int port, ISerializer serializer
         }
         catch (Exception)
         {
-            // connection dropped - worker remains in Clients:
-            // heartbeat timeout is responsible for detecting and unregistering dead workers
+            // connection dropped - client remains in Clients:
+            // heartbeat timeout is responsible for detecting and unregistering dead clients
             if (clientId.HasValue)
             {
                 _streams.TryRemove(clientId.Value, out _);
