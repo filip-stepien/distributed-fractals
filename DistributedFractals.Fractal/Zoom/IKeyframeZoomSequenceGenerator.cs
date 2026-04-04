@@ -2,11 +2,10 @@ using DistributedFractals.Core.Core;
 
 namespace DistributedFractals.Core.Zoom;
 
-public interface IKeyframeZoomSequenceGenerator<TOptions>
-    where TOptions : IBoundedFractalOptions<TOptions>
+public interface IKeyframeZoomSequenceGenerator
 {
-    IEnumerable<TOptions> Generate(
-        TOptions options,
+    IEnumerable<FrameBounds> Generate(
+        IFractalGeneratorOptions options,
         IReadOnlyList<ZoomKeyframe> keyframes,
         int totalFrames,
         IZoomInterpolation interpolation);

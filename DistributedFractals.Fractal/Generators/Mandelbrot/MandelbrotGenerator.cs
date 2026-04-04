@@ -1,22 +1,21 @@
 using System.Numerics;
 using DistributedFractals.Core.Core;
+using DistributedFractals.Core.Zoom;
 
 namespace DistributedFractals.Core.Generators.Mandelbrot;
 
 public class MandelbrotGenerator : IFractalGenerator<MandelbrotOptions>
 {
-    public FractalResult Generate(MandelbrotOptions options, IFractalColorizer colorizer)
+    public FractalResult Generate(MandelbrotOptions options, FrameBounds bounds, IFractalColorizer colorizer)
     {
         // read generator options
-        var (
-            width,
-            height,
-            maxIterations,
-            minRe,
-            maxRe,
-            minIm,
-            maxIm
-        ) = options;
+        ulong width = options.Width;
+        ulong height = options.Height;
+        ulong maxIterations = options.MaxIterations;
+        double minRe = bounds.MinRe;
+        double maxRe = bounds.MaxRe;
+        double minIm = bounds.MinIm;
+        double maxIm = bounds.MaxIm;
 
         // Stores all points generated for the final fractal image.
         List<FractalPoint> resultingPoints = [];
@@ -62,7 +61,7 @@ public class MandelbrotGenerator : IFractalGenerator<MandelbrotOptions>
                 ));
             }
         }
-        
+
         return new FractalResult(width, height, resultingPoints);
     }
 }

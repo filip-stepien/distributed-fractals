@@ -3,7 +3,7 @@ using DistributedFractals.Server.Messages;
 
 namespace DistributedFractals.Server.Handlers;
 
-public class HeartbeatMessageHandler(HeartbeatMessageServer master) : IMessageHandler<HeartbeatMessage>
+public class HeartbeatMessageHandler(IHeartbeatMessageServer master) : IMessageHandler<HeartbeatMessage>
 {
     public Task HandleAsync(HeartbeatMessage message)
     {

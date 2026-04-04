@@ -4,7 +4,7 @@ using DistributedFractals.Server.Messages;
 
 namespace DistributedFractals.Server.Heartbeat;
 
-public sealed class HeartbeatMessageServer(IMessageServer inner, TimeSpan heartbeatTimeout) : IMessageServer
+public sealed class HeartbeatMessageServer(IMessageServer inner, TimeSpan heartbeatTimeout) : IHeartbeatMessageServer
 {
     private readonly ConcurrentDictionary<Guid, HeartbeatTracker> _trackers = new();
 
