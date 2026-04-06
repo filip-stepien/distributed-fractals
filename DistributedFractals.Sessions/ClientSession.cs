@@ -54,9 +54,9 @@ public sealed class ClientSession : IClientSession
         }
     }
 
-    public async Task ConnectAsync(string displayName, ConnectionSettings connectionSettings)
+    public async Task ConnectAsync(string displayName, ClientConnectionSettings connectionSettings)
     {
-        ITransportFactory factory = TransportFactoryResolver.FromConnectionSettings(connectionSettings);
+        ITransportFactory factory = TransportFactoryResolver.Create(connectionSettings);
 
         _client = factory.CreateClient();
 

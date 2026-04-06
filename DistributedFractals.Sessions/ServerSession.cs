@@ -95,9 +95,9 @@ public sealed class ServerSession : IServerSession
         );
     }
 
-    public Task StartAsync(ConnectionSettings connectionSettings)
+    public Task StartAsync(ServerConnectionSettings connectionSettings)
     {
-        ITransportFactory factory = TransportFactoryResolver.FromConnectionSettings(connectionSettings);
+        ITransportFactory factory = TransportFactoryResolver.Create(connectionSettings);
 
         _server = new HeartbeatMessageServer(factory.CreateServer(), connectionSettings.ClientTimeout);
 

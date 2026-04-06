@@ -1,5 +1,4 @@
 using DistributedFractals.Fractal.Core;
-using DistributedFractals.Server.Core;
 
 namespace DistributedFractals.Sessions;
 
@@ -11,5 +10,5 @@ public interface IClientSession : IAsyncDisposable
     event Action<int, TimeSpan, FractalResult>? FrameCompleted;
     event Action<int>? FrameFailed;
 
-    Task ConnectAsync(string displayName, ConnectionSettings connectionSettings);
+    Task ConnectAsync(string displayName, ClientConnectionSettings connectionSettings);
 }

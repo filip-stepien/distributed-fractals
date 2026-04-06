@@ -11,7 +11,7 @@ public interface IServerSession : IAsyncDisposable
     event Action<ClientIdentifier, int>? FrameFailed;
     event Action? RenderCompleted;
 
-    Task StartAsync(ConnectionSettings connectionSettings);
+    Task StartAsync(ServerConnectionSettings connectionSettings);
     Task StartRenderAsync(RenderSettings renderSettings);
     void CancelRender();
 }

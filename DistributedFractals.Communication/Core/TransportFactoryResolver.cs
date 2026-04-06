@@ -7,7 +7,7 @@ namespace DistributedFractals.Server.Core;
 
 public static class TransportFactoryResolver
 {
-    public static ITransportFactory FromConnectionSettings(ConnectionSettings conn)
+    public static ITransportFactory Create(ConnectionSettings conn)
     {
         IPAddress address = IPAddress.Parse(conn.Address);
         JsonSerializer serializer = new();
