@@ -1,6 +1,6 @@
 using System.Net;
 using DistributedFractals.Server.Core;
-using DistributedFractals.Server.Serialization;
+using DistributedFractals.Server.Serializers;
 
 namespace DistributedFractals.Server.Tcp;
 

@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using Newtonsoft.Json;
 
-namespace DistributedFractals.Server.Serialization;
+namespace DistributedFractals.Server.Serializers;
 
 public class JsonSerializer : ISerializer
 {

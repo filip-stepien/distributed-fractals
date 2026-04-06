@@ -1,7 +1,7 @@
 using System.Numerics;
-using DistributedFractals.Core.Core;
+using DistributedFractals.Fractal.Core;
 
-namespace DistributedFractals.Core.Colorizers;
+namespace DistributedFractals.Fractal.Colorizers;
 
 public class CyclingHsvColorizer(float cycleSpeed = 5f) : IFractalColorizer
 {

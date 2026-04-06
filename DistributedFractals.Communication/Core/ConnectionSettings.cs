@@ -1,4 +1,4 @@
-namespace DistributedFractals.Sessions;
+namespace DistributedFractals.Server.Core;
 
 public sealed record ConnectionSettings(
     string Address,

@@ -1,19 +1,20 @@
-using DistributedFractals.Core.Core;
-using DistributedFractals.Core.Zoom;
+using DistributedFractals.Fractal.Colorizers;
+using DistributedFractals.Fractal.Generators;
+using DistributedFractals.Fractal.Zoom;
 using DistributedFractals.Orchestration.Selectors;
+using DistributedFractals.Video;
 
 namespace DistributedFractals.Sessions;
 
 public sealed record RenderSettings(
     IReadOnlyList<ZoomKeyframe> Keyframes,
-    FractalGeneratorType GeneratorType,
     IFractalGeneratorOptions Options,
     FractalColorizerType Colorizer,
     int TotalFrames,
     int Fps,
-    IZoomInterpolation Interpolation,
+    ZoomInterpolationType Interpolation,
     int FramesPerClient,
-    IClientSelector ClientSelector,
+    ClientSelectorType ClientSelector,
     VideoFormat OutputFormat,
     string OutputPath
 );

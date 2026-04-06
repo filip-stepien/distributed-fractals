@@ -1,4 +1,4 @@
-namespace DistributedFractals.Core.Zoom.Interpolations;
+namespace DistributedFractals.Fractal.Zoom.Interpolations;
 
 public class SmoothStepInterpolation : IZoomInterpolation
 {

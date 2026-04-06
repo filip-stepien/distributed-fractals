@@ -1,8 +1,9 @@
-using DistributedFractals.Core.Core;
-using DistributedFractals.Core.Zoom;
+using DistributedFractals.Fractal.Core;
+using DistributedFractals.Fractal.Zoom;
 using DistributedFractals.Orchestration.Schedulers;
+using DistributedFractals.Orchestration.Selectors;
 using DistributedFractals.Server.Core;
-using DistributedFractals.Server.Dispatching;
+using DistributedFractals.Server.Dispatchers;
 using DistributedFractals.Server.Heartbeat;
 using DistributedFractals.Server.Messages;
 using DistributedFractals.Video;
@@ -80,14 +81,13 @@ public sealed class ServerSession : IServerSession
                 options: settings.Options,
                 keyframes: settings.Keyframes,
                 totalFrames: settings.TotalFrames,
-                interpolation: settings.Interpolation
+                interpolation: ZoomInterpolationFactory.Create(settings.Interpolation)
             );
 
         return frameBounds.Select(
             (bounds, i) => new RenderFrameMessage(
                 Sender: _server!.Identifier,
                 FrameIndex: i,
-                GeneratorType: settings.GeneratorType,
                 ColorizerType: settings.Colorizer,
                 Options: settings.Options,
                 Bounds: bounds
@@ -121,7 +121,7 @@ public sealed class ServerSession : IServerSession
         _scheduler = new FrameScheduler(
             server: _server,
             frames: BuildFrames(renderSettings),
-            clientSelector: renderSettings.ClientSelector,
+            clientSelector: ClientSelectorFactory.Create(renderSettings.ClientSelector),
             framesPerClient: renderSettings.FramesPerClient
         );
 
