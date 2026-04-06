@@ -1,9 +1,3 @@
 namespace DistributedFractals.Server.Core;
 
-public sealed record ConnectionSettings(
-    string Address,
-    int Port,
-    TransportProtocol Protocol,
-    TimeSpan ClientTimeout,
-    TimeSpan HeartbeatInterval
-);
+public abstract record ConnectionSettings(string Address, int Port, TransportProtocol Protocol);
