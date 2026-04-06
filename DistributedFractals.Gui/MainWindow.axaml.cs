@@ -2,9 +2,11 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
-using DistributedFractals.Core.Colorizers;
-using DistributedFractals.Core.Core;
-using DistributedFractals.Core.Generators.Mandelbrot;
+using DistributedFractals.Fractal.Colorizers;
+using DistributedFractals.Fractal.Core;
+using DistributedFractals.Fractal.Generators.Mandelbrot;
+using DistributedFractals.Fractal.Mandelbrot;
+using DistributedFractals.Fractal.Zoom;
 
 namespace DistributedFractals.Gui;
 
@@ -26,16 +28,17 @@ public partial class MainWindow : Window
             int height = 600;
             ulong maxIterations = (ulong)(MaxIterationsInput.Value ?? 1000);
 
-            var options = new MandelbrotOptions(
+            MandelbrotOptions options = new(
                 Width: (ulong)width,
                 Height: (ulong)height,
                 MaxIterations: maxIterations
             );
 
-            var generator = new MandelbrotGenerator();
-            var colorizer = new BlackAndWhiteColorizer();
+            MandelbrotGenerator generator = new();
+            BlackAndWhiteColorizer colorizer = new();
+            FrameBounds bounds = options.DefaultBounds;
 
-            FractalResult result = await Task.Run(() => generator.Generate(options, colorizer));
+            FractalResult result = await Task.Run(() => generator.Generate(options, bounds, colorizer));
 
             var bitmap = new WriteableBitmap(
                 new Avalonia.PixelSize(width, height),

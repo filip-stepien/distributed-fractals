@@ -1,4 +1,5 @@
 using DistributedFractals.Fractal.Core;
+using DistributedFractals.Logging;
 using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Dispatchers;
 using DistributedFractals.Server.Messages;
@@ -39,7 +40,7 @@ public sealed class ClientSession : IClientSession
     private async Task StartHeartbeatLoopAsync(TimeSpan interval, CancellationToken cancellationToken)
     {
         using PeriodicTimer timer = new(interval);
-        Console.WriteLine("[CLIENT] Heartbeat loop started.");
+        Logger.Log("Heartbeat loop started.");
         
         try
         {
@@ -50,7 +51,7 @@ public sealed class ClientSession : IClientSession
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("[CLIENT] Heartbeat loop stopped.");
+            Logger.Log("Heartbeat loop stopped.");
         }
     }
 

@@ -15,7 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\DistributedFractals.Core\DistributedFractals.Core.csproj" />
+        <ProjectReference Include="..\DistributedFractals.Fractal\DistributedFractals.Fractal.csproj" />
     </ItemGroup>
 
 </Project>

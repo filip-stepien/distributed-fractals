@@ -13,6 +13,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\DistributedFractals.Fractal\DistributedFractals.Fractal.csproj" />
+      <ProjectReference Include="..\DistributedFractals.Logging\DistributedFractals.Logging.csproj" />
     </ItemGroup>
 
 </Project>

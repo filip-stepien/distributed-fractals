@@ -5,6 +5,7 @@ using DistributedFractals.Fractal.Generators.Mandelbrot;
 using DistributedFractals.Fractal.Mandelbrot;
 using DistributedFractals.Fractal.Zoom;
 using DistributedFractals.Fractal.Zoom.Interpolations;
+using DistributedFractals.Logging;
 using DistributedFractals.Orchestration.Schedulers;
 using DistributedFractals.Orchestration.Selectors;
 using DistributedFractals.Server.Dispatchers;
@@ -14,6 +15,8 @@ using DistributedFractals.Server.Messages;
 using DistributedFractals.Server.Serializers;
 using DistributedFractals.Server.Tcp;
 using DistributedFractals.Video.Gif;
+
+Logger.Initialize(new ConsoleLogger());
 
 MandelbrotOptions baseOptions = new(400, 300, MaxIterations: 500);
 
@@ -55,21 +58,21 @@ master.MessageReceived += async message =>
 
 master.ClientRegistered += client =>
 {
-    Console.WriteLine($"[MASTER] Worker joined: {client}");
+    Logger.Log($"Worker joined: {client}");
     scheduler.OnClientAvailable(client);
 };
 
 master.ClientUnregistered += client =>
 {
-    Console.WriteLine($"[MASTER] Worker unregistered: {client}.");
+    Logger.Log($"Worker unregistered: {client}.");
     scheduler.OnClientFailed(client);
 };
 
 await master.StartAsync();
-Console.WriteLine("[MASTER] Server started. Waiting for workers...");
+Logger.Log("Server started. Waiting for workers...");
 
 await scheduler.WaitForAllAsync();
-Console.WriteLine("[MASTER] All frames received. Saving GIF...");
+Logger.Log("All frames received. Saving GIF...");
 
 string outputPath = Path.Combine(Path.GetTempPath(), "fractal_zoom.gif");
 GifVideoWriter videoWriter = new(outputPath, frameRate: 24, repeat: true);
@@ -80,6 +83,6 @@ foreach (FractalResult frame in scheduler.GetOrderedResults())
 }
 
 await videoWriter.DisposeAsync();
-Console.WriteLine($"[MASTER] GIF saved: {outputPath}");
+Logger.Log($"GIF saved: {outputPath}");
 
 await master.DisposeAsync();

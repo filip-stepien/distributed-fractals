@@ -1,5 +1,6 @@
 using DistributedFractals.Fractal;
 using DistributedFractals.Fractal.Core;
+using DistributedFractals.Logging;
 using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Messages;
 
@@ -17,11 +18,11 @@ public class RenderFractalHandler(
         onStarted?.Invoke(message.FrameIndex);
         try
         {
-            Console.WriteLine($"[WORKER] Rendering frame {message.FrameIndex}...");
+            Logger.Log($"Rendering frame {message.FrameIndex}...");
             DateTime start = DateTime.UtcNow;
             FractalResult result = await FrameRenderer.RenderAsync(message.Options, message.Bounds, message.ColorizerType);
             TimeSpan duration = DateTime.UtcNow - start;
-            Console.WriteLine($"[WORKER] Frame {message.FrameIndex} rendered ({result.Width}x{result.Height}). Sending result...");
+            Logger.Log($"Frame {message.FrameIndex} rendered ({result.Width}x{result.Height}). Sending result...");
 
             await client.SendToServerAsync(new RenderResultMessage(client.Identifier, message.FrameIndex, result));
             onCompleted?.Invoke(message.FrameIndex, duration, result);

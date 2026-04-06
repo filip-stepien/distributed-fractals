@@ -1,4 +1,5 @@
 using DistributedFractals.Fractal.Core;
+using DistributedFractals.Logging;
 using DistributedFractals.Orchestration.Selectors;
 using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Messages;
@@ -88,7 +89,7 @@ public sealed class FrameScheduler : IFrameScheduler
             TimeSpan duration = dispatchedAt != default ? DateTime.UtcNow - dispatchedAt : TimeSpan.Zero;
 
             _completed[frameIndex] = result;
-            Console.WriteLine($"[MASTER] Frame {frameIndex} received from client {client.DisplayName} ({_completed.Count}/{_totalFrames}).");
+            Logger.Log($"Frame {frameIndex} received from client {client.DisplayName} ({_completed.Count}/{_totalFrames}).");
             FrameCompleted?.Invoke(client, frameIndex, duration);
 
             if (_completed.Count == _totalFrames)
@@ -110,7 +111,7 @@ public sealed class FrameScheduler : IFrameScheduler
             {
                 foreach ((RenderFrameMessage msg, DateTime dispatchedAt) frame in frames)
                 {
-                    Console.WriteLine($"[MASTER] Re-queuing frame {frame.msg.FrameIndex} after client {client.DisplayName} failed.");
+                    Logger.Log($"Re-queuing frame {frame.msg.FrameIndex} after client {client.DisplayName} failed.");
                     _pending.Enqueue(frame.msg);
                     FrameFailed?.Invoke(client, frame.msg.FrameIndex);
                 }
@@ -137,7 +138,7 @@ public sealed class FrameScheduler : IFrameScheduler
 
             RenderFrameMessage msg = _pending.Dequeue();
             _inFlight[client].Add((msg, DateTime.UtcNow));
-            Console.WriteLine($"[MASTER] Sending frame {msg.FrameIndex} to client {client.DisplayName}.");
+            Logger.Log($"Sending frame {msg.FrameIndex} to client {client.DisplayName}.");
             FrameDispatched?.Invoke(client, msg.FrameIndex);
             _ = _server.SendToClientAsync(client, msg);
         }

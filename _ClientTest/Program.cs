@@ -1,10 +1,13 @@
 using System.Net;
+using DistributedFractals.Logging;
 using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Dispatchers;
 using DistributedFractals.Server.Handlers;
 using DistributedFractals.Server.Messages;
 using DistributedFractals.Server.Serializers;
 using DistributedFractals.Server.Tcp;
+
+Logger.Initialize(new ConsoleLogger());
 
 IMessageClient client = new TcpTransportFactory(
     IPAddress.Loopback, 3000, new JsonSerializer()
@@ -22,7 +25,7 @@ client.MessageReceived += async message =>
 await client.StartAsync();
 await client.SendToServerAsync(new JoinMessage(client.Identifier, "TestClient"));
 
-Console.WriteLine("[WORKER] Joined. Press Enter to quit.");
+Logger.Log("Joined. Press Enter to quit.");
 
 CancellationTokenSource cts = new();
 
@@ -32,7 +35,7 @@ _ = Task.Run(async () =>
     while (await timer.WaitForNextTickAsync(cts.Token))
     {
         await client.SendToServerAsync(new HeartbeatMessage(client.Identifier));
-        Console.WriteLine("[WORKER] Heartbeat sent.");
+        Logger.Log("Heartbeat sent.");
     }
 }, cts.Token);
 
