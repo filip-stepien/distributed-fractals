@@ -1,12 +1,13 @@
-using DistributedFractals.Core.Core;
-using DistributedFractals.Core.Zoom;
+using DistributedFractals.Fractal.Colorizers;
+using DistributedFractals.Fractal.Core;
+using DistributedFractals.Fractal.Generators;
+using DistributedFractals.Fractal.Zoom;
 
 namespace DistributedFractals.Server.Messages;
 
 public sealed record RenderFrameMessage(
     Guid Sender,
     int FrameIndex,
-    FractalGeneratorType GeneratorType,
     FractalColorizerType ColorizerType,
     IFractalGeneratorOptions Options,
     FrameBounds Bounds

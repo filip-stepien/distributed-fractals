@@ -1,4 +1,4 @@
-﻿namespace DistributedFractals.Server.Serialization;
+﻿namespace DistributedFractals.Server.Serializers;
 
 public interface ISerializer
 {

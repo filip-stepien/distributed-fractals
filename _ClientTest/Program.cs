@@ -1,12 +1,9 @@
 using System.Net;
-using DistributedFractals.Core.Colorizers;
-using DistributedFractals.Core.Core;
-using DistributedFractals.Core.Generators.Mandelbrot;
 using DistributedFractals.Server.Core;
-using DistributedFractals.Server.Dispatching;
+using DistributedFractals.Server.Dispatchers;
 using DistributedFractals.Server.Handlers;
 using DistributedFractals.Server.Messages;
-using DistributedFractals.Server.Serialization;
+using DistributedFractals.Server.Serializers;
 using DistributedFractals.Server.Tcp;
 
 IMessageClient client = new TcpTransportFactory(
@@ -15,13 +12,7 @@ IMessageClient client = new TcpTransportFactory(
 
 MessageDispatcher dispatcher = new();
 dispatcher.Register(new UnregisteredMessageHandler());
-dispatcher.Register(
-    new RenderFractalHandler.Builder(client)
-        .AddGenerator(FractalGeneratorType.Mandelbrot, new MandelbrotGenerator())
-        .AddColorizer(FractalColorizerType.BlackAndWhite, new BlackAndWhiteColorizer())
-        .AddColorizer(FractalColorizerType.CyclingHsv, new CyclingHsvColorizer())
-        .Build()
-);
+dispatcher.Register(new RenderFractalHandler(client));
 
 client.MessageReceived += async message =>
 {

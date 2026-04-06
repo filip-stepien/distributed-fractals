@@ -1,12 +1,11 @@
 using System.Net;
-using DistributedFractals.Server.Core;
-using DistributedFractals.Server.Serialization;
+using DistributedFractals.Server.Serializers;
 using DistributedFractals.Server.Tcp;
 using DistributedFractals.Server.Udp;
 
-namespace DistributedFractals.Sessions;
+namespace DistributedFractals.Server.Core;
 
-internal static class TransportFactoryResolver
+public static class TransportFactoryResolver
 {
     public static ITransportFactory FromConnectionSettings(ConnectionSettings conn)
     {

@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Messages;
-using DistributedFractals.Server.Serialization;
+using DistributedFractals.Server.Serializers;
 
 namespace DistributedFractals.Server.Tcp;
 

@@ -1,4 +1,4 @@
-using DistributedFractals.Core.Core;
+using DistributedFractals.Fractal.Core;
 
 namespace DistributedFractals.Server.Core;
 

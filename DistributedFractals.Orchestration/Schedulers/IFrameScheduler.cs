@@ -1,4 +1,4 @@
-using DistributedFractals.Core.Core;
+using DistributedFractals.Fractal.Core;
 using DistributedFractals.Server.Core;
 
 namespace DistributedFractals.Orchestration.Schedulers;

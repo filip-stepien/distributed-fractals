@@ -1,4 +1,4 @@
-namespace DistributedFractals.Core.Core;
+namespace DistributedFractals.Fractal.Generators;
 
 public enum FractalGeneratorType
 {

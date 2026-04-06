@@ -1,6 +1,6 @@
-using DistributedFractals.Core.Core;
+using DistributedFractals.Fractal.Core;
 using DistributedFractals.Server.Core;
-using DistributedFractals.Server.Dispatching;
+using DistributedFractals.Server.Dispatchers;
 using DistributedFractals.Server.Messages;
 
 namespace DistributedFractals.Sessions;
@@ -60,7 +60,7 @@ public sealed class ClientSession : IClientSession
 
         _client = factory.CreateClient();
 
-        IMessageDispatcher dispatcher = ClientMessageDispatcherFactory.Create(
+        IMessageDispatcher dispatcher = MessageDispatcherFactory.CreateClient(
             _client,
             onFrameStarted: OnFrameStarted,
             onFrameCompleted: OnFrameCompleted,

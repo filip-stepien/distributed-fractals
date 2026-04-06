@@ -1,4 +1,4 @@
-using DistributedFractals.Core.Core;
+using DistributedFractals.Fractal.Core;
 using DistributedFractals.Orchestration.Selectors;
 using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Messages;

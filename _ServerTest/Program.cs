@@ -1,15 +1,17 @@
 using System.Net;
-using DistributedFractals.Core.Core;
-using DistributedFractals.Core.Generators.Mandelbrot;
-using DistributedFractals.Core.Zoom;
-using DistributedFractals.Core.Zoom.Interpolations;
+using DistributedFractals.Fractal.Colorizers;
+using DistributedFractals.Fractal.Core;
+using DistributedFractals.Fractal.Generators.Mandelbrot;
+using DistributedFractals.Fractal.Mandelbrot;
+using DistributedFractals.Fractal.Zoom;
+using DistributedFractals.Fractal.Zoom.Interpolations;
 using DistributedFractals.Orchestration.Schedulers;
 using DistributedFractals.Orchestration.Selectors;
-using DistributedFractals.Server.Dispatching;
+using DistributedFractals.Server.Dispatchers;
 using DistributedFractals.Server.Handlers;
 using DistributedFractals.Server.Heartbeat;
 using DistributedFractals.Server.Messages;
-using DistributedFractals.Server.Serialization;
+using DistributedFractals.Server.Serializers;
 using DistributedFractals.Server.Tcp;
 using DistributedFractals.Video.Gif;
 
@@ -34,7 +36,6 @@ List<RenderFrameMessage> frames = frameBounds
     .Select((bounds, i) => new RenderFrameMessage(
         master.Identifier,
         i,
-        FractalGeneratorType.Mandelbrot,
         FractalColorizerType.CyclingHsv,
         baseOptions,
         bounds))

@@ -1,12 +1,14 @@
 using System.Numerics;
-using DistributedFractals.Core.Core;
-using DistributedFractals.Core.Zoom;
+using DistributedFractals.Fractal.Colorizers;
+using DistributedFractals.Fractal.Core;
+using DistributedFractals.Fractal.Mandelbrot;
+using DistributedFractals.Fractal.Zoom;
 
-namespace DistributedFractals.Core.Generators.Mandelbrot;
+namespace DistributedFractals.Fractal.Generators.Mandelbrot;
 
-public class MandelbrotGenerator : IFractalGenerator<MandelbrotOptions>
+public class MandelbrotGenerator : FractalGeneratorBase<MandelbrotOptions>
 {
-    public FractalResult Generate(MandelbrotOptions options, FrameBounds bounds, IFractalColorizer colorizer)
+    protected override FractalResult Generate(MandelbrotOptions options, FrameBounds bounds, IFractalColorizer colorizer)
     {
         // read generator options
         ulong width = options.Width;

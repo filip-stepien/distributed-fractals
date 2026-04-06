@@ -1,9 +1,8 @@
-using DistributedFractals.Video;
 using DistributedFractals.Video.Gif;
 
-namespace DistributedFractals.Sessions;
+namespace DistributedFractals.Video;
 
-internal static class VideoWriterFactory
+public static class VideoWriterFactory
 {
     public static IVideoWriter Create(string outputPath, int fps, VideoFormat format)
     {

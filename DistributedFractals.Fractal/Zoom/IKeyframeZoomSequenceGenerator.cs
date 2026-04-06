@@ -1,6 +1,7 @@
-using DistributedFractals.Core.Core;
+using DistributedFractals.Fractal.Core;
+using DistributedFractals.Fractal.Generators;
 
-namespace DistributedFractals.Core.Zoom;
+namespace DistributedFractals.Fractal.Zoom;
 
 public interface IKeyframeZoomSequenceGenerator
 {
