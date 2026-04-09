@@ -11,6 +11,7 @@ using DistributedFractals.Core.Colorizers;
 using DistributedFractals.Core.Core;
 using DistributedFractals.Core.Generators.Mandelbrot;
 using DistributedFractals.Core.Zoom;
+using DistributedFractals.Gui.Networking;
 
 namespace DistributedFractals.Gui.Views;
 
@@ -19,8 +20,28 @@ public partial class MainView : UserControl
     private readonly bool _isServerMode;
 
     // Fractal state
-    private MandelbrotOptions _previewOptions = new(800, 600, MaxIterations: 500);
+    private MandelbrotOptions _previewOptions = BuildBaseOptions(800, 600, 500);
     private readonly List<ZoomKeyframe> _keyframes = [];
+
+    // Default Mandelbrot framing: full set centered at (-0.75, 0) with Re range 3.5.
+    // Im range is derived from the pixel aspect ratio so the generated image is not stretched
+    // (MandelbrotGenerator maps pixels 1:1 onto the complex-plane bounds).
+    private const double DefaultReRange  = 3.5;
+    private const double DefaultCenterRe = -0.75;
+    private const double DefaultCenterIm = 0.0;
+
+    private static MandelbrotOptions BuildBaseOptions(int width, int height, ulong maxIter)
+    {
+        double imRange = DefaultReRange * height / width;
+        return new MandelbrotOptions(
+            Width: (ulong)width,
+            Height: (ulong)height,
+            MaxIterations: maxIter,
+            MinRe: DefaultCenterRe - DefaultReRange / 2.0,
+            MaxRe: DefaultCenterRe + DefaultReRange / 2.0,
+            MinIm: DefaultCenterIm - imRange / 2.0,
+            MaxIm: DefaultCenterIm + imRange / 2.0);
+    }
 
     // Selection state
     private Point _selectionStart;
@@ -54,19 +75,19 @@ public partial class MainView : UserControl
         int height = (int)(HeightInput.Value ?? 600);
         ulong maxIter = (ulong)(MaxIterationsInput.Value ?? 500);
 
-        double baseReRange = 3.5;  // default MaxRe(1.0) - MinRe(-2.5)
-        double baseImRange = 2.4;  // default MaxIm(1.2) - MinIm(-1.2)
-        double halfRe = baseReRange * kf.Scale / 2.0;
-        double halfIm = baseImRange * kf.Scale / 2.0;
+        // Use the same base bounds the renderer will use, so the preview matches
+        // KeyframeZoomSequenceGenerator's math exactly (it scales reRange/imRange by kf.Scale).
+        var baseOptions = BuildBaseOptions(width, height, maxIter);
+        double halfRe = (baseOptions.MaxRe - baseOptions.MinRe) * kf.Scale / 2.0;
+        double halfIm = (baseOptions.MaxIm - baseOptions.MinIm) * kf.Scale / 2.0;
 
-        var options = new MandelbrotOptions(
-            Width: (ulong)width,
-            Height: (ulong)height,
-            MaxIterations: maxIter,
-            MinRe: kf.CenterRe - halfRe,
-            MaxRe: kf.CenterRe + halfRe,
-            MinIm: kf.CenterIm - halfIm,
-            MaxIm: kf.CenterIm + halfIm);
+        var options = baseOptions with
+        {
+            MinRe = kf.CenterRe - halfRe,
+            MaxRe = kf.CenterRe + halfRe,
+            MinIm = kf.CenterIm - halfIm,
+            MaxIm = kf.CenterIm + halfIm,
+        };
 
         return GeneratePreviewAsync(options);
     }
@@ -81,10 +102,7 @@ public partial class MainView : UserControl
             int height = (int)(HeightInput.Value ?? 600);
             ulong maxIter = (ulong)(MaxIterationsInput.Value ?? 500);
 
-            _previewOptions = overrideOptions ?? new MandelbrotOptions(
-                Width: (ulong)width,
-                Height: (ulong)height,
-                MaxIterations: maxIter);
+            _previewOptions = overrideOptions ?? BuildBaseOptions(width, height, maxIter);
 
             IFractalColorizer colorizer = ColorizerCombo.SelectedIndex == 0
                 ? new BlackAndWhiteColorizer()
@@ -232,9 +250,13 @@ public partial class MainView : UserControl
         double centerRe = _previewOptions.MinRe + (cImgX / imgW) * reRange;
         double centerIm = _previewOptions.MinIm + (cImgY / imgH) * imRange;
 
-        // Scale = selection width as fraction of full image width
-        // (ZoomSequenceGenerator multiplies base range by Scale to get half-range * 2)
-        double scale = selW / renderScale / imgW;
+        // Scale is interpreted by KeyframeZoomSequenceGenerator as a fraction of the *base*
+        // complex range, NOT the current preview's range. If we're already zoomed in, the
+        // current preview itself only covers `currentScale` of the base range, so the new
+        // keyframe's scale must be that compounded with the selection's fraction of the preview.
+        double currentScale = (_previewOptions.MaxRe - _previewOptions.MinRe) / DefaultReRange;
+        double selectionFraction = selW / renderScale / imgW;
+        double scale = currentScale * selectionFraction;
 
         AddKeyframe(new ZoomKeyframe(T: 0, CenterRe: centerRe, CenterIm: centerIm, Scale: scale));
         SelectionRect.IsVisible = false;
@@ -518,8 +540,29 @@ public partial class MainView : UserControl
         var dialog = new RenderDialog(width, height, totalFrames, fps);
         var result = await dialog.ShowDialog<bool?>(TopLevel.GetTopLevel(this) as Window);
 
-        if (result is true && VisualRoot is MainWindow window)
-            window.NavigateToRender(_isServerMode, totalFrames);
+        if (result is not true || VisualRoot is not MainWindow window) return;
+        if (string.IsNullOrWhiteSpace(dialog.OutputPath))
+        {
+            Log("No output path selected.");
+            return;
+        }
+
+        ulong maxIter = (ulong)(MaxIterationsInput.Value ?? 500);
+        var baseOptions = BuildBaseOptions(width, height, maxIter);
+        var colorizerType = ColorizerCombo.SelectedIndex == 0
+            ? FractalColorizerType.BlackAndWhite
+            : FractalColorizerType.CyclingHsv;
+
+        var config = new RenderJobConfig(
+            BaseOptions: baseOptions,
+            Keyframes: _keyframes.ToList(),
+            TotalFrames: totalFrames,
+            FrameRate: fps,
+            Colorizer: colorizerType,
+            OutputPath: dialog.OutputPath
+        );
+
+        window.NavigateToRender(_isServerMode, config);
     }
 
     // ── Log ───────────────────────────────────────────────────────────────────────

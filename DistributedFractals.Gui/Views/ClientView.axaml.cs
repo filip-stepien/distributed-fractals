@@ -25,7 +25,7 @@ public partial class ClientView : UserControl
         _serverAddress = serverAddress;
         InitializeComponent();
         ConnectionText.Text = serverAddress;
-        SetConnected(true);
+        SetConnected(false);
     }
 
     // ── Public API ────────────────────────────────────────────────────────────────
@@ -113,61 +113,4 @@ public partial class ClientView : UserControl
 
     private void Log(string message) => (VisualRoot as MainWindow)?.Log(message);
 
-    // ── Mock simulation ───────────────────────────────────────────────────────────
-
-    public void StartMockClient() => _ = RunMockAsync();
-
-    private async Task RunMockAsync()
-    {
-        const int total = 1_000_000;
-        var rng = new Random(42);
-        await Task.Delay(400);
-        Dispatcher.UIThread.InvokeAsync(() => { OnConnected(); SetTotalFrames(total); });
-
-        for (int i = 0; i < total; i++)
-        {
-            int frame    = i;
-            int renderMs = rng.Next(300, 1400);
-
-            Dispatcher.UIThread.InvokeAsync(() => OnFrameStarted(frame));
-            await Task.Delay(renderMs);
-
-            var bitmap = GenerateMockFrame(frame, rng);
-            Dispatcher.UIThread.InvokeAsync(() =>
-                OnFrameCompleted(frame, TimeSpan.FromMilliseconds(renderMs), bitmap));
-
-            await Task.Delay(rng.Next(30, 150));
-        }
-    }
-
-    private static WriteableBitmap GenerateMockFrame(int frameIndex, Random rng)
-    {
-        const int w = 320, h = 200;
-        var bitmap = new WriteableBitmap(
-            new Avalonia.PixelSize(w, h),
-            new Avalonia.Vector(96, 96),
-            PixelFormats.Bgra8888);
-
-        using var buf = bitmap.Lock();
-        unsafe
-        {
-            byte* ptr = (byte*)buf.Address;
-            double t   = frameIndex / 120.0;
-            byte   r   = (byte)(30 + 60 * Math.Sin(t * Math.PI * 2));
-            byte   g   = (byte)(10 + 40 * Math.Sin(t * Math.PI * 2 + 2));
-            byte   b   = (byte)(60 + 80 * Math.Cos(t * Math.PI));
-
-            for (int y = 0; y < h; y++)
-            for (int x = 0; x < w; x++)
-            {
-                int idx = (y * w + x) * 4;
-                double noise = rng.NextDouble() * 8;
-                ptr[idx]     = (byte)Math.Clamp(b + noise, 0, 255); // B
-                ptr[idx + 1] = (byte)Math.Clamp(g + noise, 0, 255); // G
-                ptr[idx + 2] = (byte)Math.Clamp(r + noise, 0, 255); // R
-                ptr[idx + 3] = 255;                                  // A
-            }
-        }
-        return bitmap;
-    }
 }

@@ -212,14 +212,15 @@ public partial class RenderView : UserControl
 
     // ── Public API ────────────────────────────────────────────────────────────────
 
-    public void OnClientConnected(string clientId, string address)
+    public void OnClientConnected(string clientId, string displayName, string address)
     {
         if (_cards.ContainsKey(clientId)) return;
-        var card = BuildCard(address);
+        string title = !string.IsNullOrWhiteSpace(displayName) ? displayName : clientId;
+        var card = BuildCard(title);
         SetCardConnected(card, true);
         _cards[clientId] = card;
         ClientCardsPanel.Children.Add(card.CardBorder);
-        Log($"Client {address} connected.");
+        Log($"Client {title} ({address}) connected.");
     }
 
     public void OnFrameDispatched(string clientId, int frameIndex)
@@ -363,7 +364,7 @@ public partial class RenderView : UserControl
 
         foreach (var (id, addr) in clients)
         {
-            OnClientConnected(id, addr);
+            OnClientConnected(id, id, addr);
             await Task.Delay(rng.Next(150, 500));
         }
 

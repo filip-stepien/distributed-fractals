@@ -57,6 +57,16 @@
                     </Grid>
                 </StackPanel>
 
+                <!-- Display name (client only) -->
+                <StackPanel x:Name="DisplayNameRow" Spacing="8" IsVisible="False">
+                    <TextBlock Text="DISPLAY NAME"
+                               FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
+                               Foreground="{StaticResource AppTextMutedBrush}" />
+                    <TextBox x:Name="DisplayNameInput"
+                             Watermark="e.g. laptop-01"
+                             Foreground="{StaticResource AppTextBrush}" />
+                </StackPanel>
+
                 <!-- Address (client only) -->
                 <StackPanel x:Name="AddressRow" Spacing="8" IsVisible="False">
                     <TextBlock Text="SERVER ADDRESS"

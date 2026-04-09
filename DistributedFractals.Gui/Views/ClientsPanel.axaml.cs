@@ -23,7 +23,7 @@ public partial class ClientsPanel : UserControl
         InitializeComponent();
     }
 
-    public void OnClientConnected(string clientId, string address)
+    public void OnClientConnected(string clientId, string displayName, string address)
     {
         EmptyText.IsVisible = false;
 
@@ -35,9 +35,11 @@ public partial class ClientsPanel : UserControl
             Margin = new Avalonia.Thickness(0, 3, 8, 0)
         };
 
+        string title = !string.IsNullOrWhiteSpace(displayName) ? displayName : clientId;
+
         var nameText = new TextBlock
         {
-            Text = clientId,
+            Text = title,
             FontSize = 12,
             FontWeight = FontWeight.SemiBold,
             Foreground = new SolidColorBrush(TextColor),
@@ -79,7 +81,7 @@ public partial class ClientsPanel : UserControl
 
         _connectedCount++;
         UpdateCount();
-        Log($"{address} joined");
+        Log($"{title} ({address}) joined");
     }
 
     public void OnClientDisconnected(string clientId)
