@@ -26,6 +26,8 @@ public abstract class MessageServerBase : IMessageServer
         ClientUnregistered?.Invoke(client);
     }
 
+    public virtual string? GetClientAddress(Guid clientId) => null;
+
     public abstract Task StartAsync();
     public abstract Task SendToClientAsync(ClientIdentifier client, BaseMessage message);
     public abstract Task BroadcastAsync(BaseMessage message);

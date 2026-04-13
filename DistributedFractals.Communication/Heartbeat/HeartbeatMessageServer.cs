@@ -71,6 +71,8 @@ public sealed class HeartbeatMessageServer(IMessageServer inner, TimeSpan heartb
         UnregisterClient(client);
     }
 
+    public string? GetClientAddress(Guid clientId) => inner.GetClientAddress(clientId);
+
     public Task SendToClientAsync(ClientIdentifier client, BaseMessage message)
         => inner.SendToClientAsync(client, message);
 

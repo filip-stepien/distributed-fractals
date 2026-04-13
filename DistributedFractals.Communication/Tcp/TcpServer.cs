@@ -12,14 +12,19 @@ public class TcpServer(IPAddress listenAddress, int port, ISerializer serializer
     public override event Action<BaseMessage>? MessageReceived;
 
     private readonly ConcurrentDictionary<Guid, TcpStream> _streams = new();
+    private readonly ConcurrentDictionary<Guid, string> _addresses = new();
     private TcpListener? _listener;
     private CancellationTokenSource? _cts;
 
     public override void UnregisterClient(ClientIdentifier client)
     {
         _streams.TryRemove(client.Id, out _);
+        _addresses.TryRemove(client.Id, out _);
         base.UnregisterClient(client);
     }
+
+    public override string? GetClientAddress(Guid clientId)
+        => _addresses.TryGetValue(clientId, out string? address) ? address : null;
 
     public override Task StartAsync()
     {
@@ -77,11 +82,12 @@ public class TcpServer(IPAddress listenAddress, int port, ISerializer serializer
         {
             System.Net.Sockets.TcpClient client = await _listener!.AcceptTcpClientAsync(cancellationToken);
             TcpStream stream = new(client.GetStream());
-            _ = ReceiveLoopAsync(client, stream, cancellationToken);
+            string? remoteAddress = (client.Client.RemoteEndPoint as IPEndPoint)?.Address.ToString();
+            _ = ReceiveLoopAsync(client, stream, remoteAddress, cancellationToken);
         }
     }
 
-    private async Task ReceiveLoopAsync(System.Net.Sockets.TcpClient client, TcpStream stream, CancellationToken cancellationToken)
+    private async Task ReceiveLoopAsync(System.Net.Sockets.TcpClient client, TcpStream stream, string? remoteAddress, CancellationToken cancellationToken)
     {
         Guid? clientId = null;
 
@@ -94,6 +100,8 @@ public class TcpServer(IPAddress listenAddress, int port, ISerializer serializer
 
                 clientId = baseMessage.Sender;
                 _streams.TryAdd(clientId.Value, stream);
+                if (remoteAddress is not null)
+                    _addresses.TryAdd(clientId.Value, remoteAddress);
 
                 MessageReceived?.Invoke(baseMessage);
             }

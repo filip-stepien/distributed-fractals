@@ -16,6 +16,13 @@
 
     <ItemGroup>
         <ProjectReference Include="..\DistributedFractals.Fractal\DistributedFractals.Fractal.csproj" />
+        <ProjectReference Include="..\DistributedFractals.Communication\DistributedFractals.Communication.csproj" />
+        <ProjectReference Include="..\DistributedFractals.Orchestration\DistributedFractals.Orchestration.csproj" />
+        <ProjectReference Include="..\DistributedFractals.Video\DistributedFractals.Video.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <AvaloniaResource Include="Styles\ButtonStyles.axaml" />
     </ItemGroup>
 
 </Project>
