@@ -1,7 +1,27 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="DistributedFractals.Gui.App">
+             x:Class="DistributedFractals.Gui.App"
+             RequestedThemeVariant="Dark">
     <Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="avares://DistributedFractals.Gui/Styles/ButtonStyles.axaml" />
     </Application.Styles>
+    <Application.Resources>
+        <!-- Force blue accent across all platforms (overrides system accent) -->
+        <Color x:Key="SystemAccentColor">#4A9EFF</Color>
+        <Color x:Key="SystemAccentColorDark1">#3080D0</Color>
+        <Color x:Key="SystemAccentColorDark2">#1A60B0</Color>
+        <Color x:Key="SystemAccentColorDark3">#0A4090</Color>
+        <Color x:Key="SystemAccentColorLight1">#6AB4FF</Color>
+        <Color x:Key="SystemAccentColorLight2">#8AC8FF</Color>
+        <Color x:Key="SystemAccentColorLight3">#AAD8FF</Color>
+        <SolidColorBrush x:Key="AppBgBrush">#FF111318</SolidColorBrush>
+        <SolidColorBrush x:Key="AppSurfaceBrush">#FF1C1F26</SolidColorBrush>
+        <SolidColorBrush x:Key="AppBorderBrush">#FF2A2D35</SolidColorBrush>
+        <SolidColorBrush x:Key="AppAccentBrush">#FF4A9EFF</SolidColorBrush>
+        <SolidColorBrush x:Key="AppTextBrush">#FFE2E8F0</SolidColorBrush>
+        <SolidColorBrush x:Key="AppTextMutedBrush">#FF6B7280</SolidColorBrush>
+        <SolidColorBrush x:Key="AppGreenBrush">#FF22C55E</SolidColorBrush>
+        <SolidColorBrush x:Key="AppRedBrush">#FFEF4444</SolidColorBrush>
+    </Application.Resources>
 </Application>

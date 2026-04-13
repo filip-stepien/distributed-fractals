@@ -2,13 +2,74 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="DistributedFractals.Gui.MainWindow"
         Title="Distributed Fractals"
-        Width="900" Height="700">
-    <DockPanel>
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8" Spacing="8">
-            <TextBlock VerticalAlignment="Center" Text="Max Iterations:" />
-            <NumericUpDown x:Name="MaxIterationsInput" Value="1000" Minimum="10" Maximum="100000" Increment="100" Width="150" />
-            <Button x:Name="GenerateButton" Content="Generate" Click="OnGenerateClick" />
-        </StackPanel>
-        <Image x:Name="FractalImage" Stretch="Uniform" />
-    </DockPanel>
+        Width="1280" Height="800"
+        MinWidth="900" MinHeight="600"
+        Background="{StaticResource AppBgBrush}">
+    <Grid x:Name="RootGrid" RowDefinitions="*,0,0">
+
+        <!-- Main area: content + splitter + sidebar -->
+        <Grid x:Name="ContentGrid" Grid.Row="0" ColumnDefinitions="*,0,0">
+            <ContentControl x:Name="ContentArea" Grid.Column="0" />
+            <GridSplitter x:Name="ClientsSplitter"
+                          Grid.Column="1"
+                          ResizeDirection="Columns"
+                          Background="{StaticResource AppBorderBrush}"
+                          HorizontalAlignment="Stretch"
+                          IsVisible="False"
+                          Cursor="SizeWestEast" />
+            <Border Grid.Column="2"
+                    x:Name="ClientsSidebarBorder"
+                    IsVisible="False"
+                    BorderBrush="{StaticResource AppBorderBrush}"
+                    BorderThickness="0,0,0,0">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled">
+                    <ContentControl x:Name="ClientsSidebarContent" MinWidth="140" />
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- Console splitter -->
+        <GridSplitter x:Name="ConsoleSplitter"
+                      Grid.Row="1"
+                      ResizeDirection="Rows"
+                      Background="{StaticResource AppBorderBrush}"
+                      VerticalAlignment="Stretch"
+                      IsVisible="False"
+                      Cursor="SizeNorthSouth" />
+
+        <!-- Full-width console -->
+        <Border Grid.Row="2"
+                x:Name="ConsoleBorder"
+                Background="{StaticResource AppSurfaceBrush}"
+                BorderBrush="{StaticResource AppBorderBrush}"
+                BorderThickness="0,0,0,0"
+                IsVisible="False">
+            <Grid RowDefinitions="34,*">
+                <Border Grid.Row="0" Margin="12,0">
+                    <TextBlock Text="Console"
+                               FontSize="12" FontWeight="SemiBold"
+                               Foreground="{StaticResource AppTextMutedBrush}"
+                               VerticalAlignment="Center" />
+                </Border>
+                <Border x:Name="LogContent"
+                        Grid.Row="1"
+                        BorderBrush="{StaticResource AppBorderBrush}"
+                        BorderThickness="0,1,0,0">
+                    <TextBox x:Name="LogTextBox"
+                             IsReadOnly="True"
+                             TextWrapping="NoWrap"
+                             AcceptsReturn="True"
+                             FontFamily="Consolas,Courier New,monospace"
+                             FontSize="12"
+                             Foreground="{StaticResource AppTextBrush}"
+                             Background="{StaticResource AppBgBrush}"
+                             BorderThickness="0"
+                             VerticalContentAlignment="Top"
+                             Padding="12,8" />
+                </Border>
+            </Grid>
+        </Border>
+
+    </Grid>
 </Window>

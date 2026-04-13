@@ -1,0 +1,161 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DistributedFractals.Gui.Views.ConnectView"
+             Background="{StaticResource AppBgBrush}">
+    <Grid>
+        <!-- Centered connection card -->
+        <Border Width="420"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="{StaticResource AppSurfaceBrush}"
+                BorderBrush="{StaticResource AppBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="40,36">
+            <StackPanel Spacing="28">
+
+                <!-- Header -->
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="DISTRIBUTED FRACTALS"
+                               FontSize="10" FontWeight="SemiBold"
+                               LetterSpacing="2"
+                               Foreground="{StaticResource AppAccentBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,6" />
+                    <TextBlock Text="Set up your node"
+                               FontSize="22" FontWeight="Bold"
+                               Foreground="{StaticResource AppTextBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,14" />
+                    <TextBlock Text="Choose whether to host a render session&#x0a;or join one as a worker."
+                               FontSize="13"
+                               Foreground="{StaticResource AppTextMutedBrush}"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center" />
+                </StackPanel>
+
+                <!-- Mode toggle -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="MODE"
+                               FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
+                               Foreground="{StaticResource AppTextMutedBrush}" />
+                    <Grid ColumnDefinitions="*,8,*">
+                        <Button x:Name="ServerModeButton"
+                                Grid.Column="0"
+                                Content="Server"
+                                Classes="accent"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Click="OnServerModeClick" />
+                        <Button x:Name="ClientModeButton"
+                                Grid.Column="2"
+                                Content="Client"
+                                Classes="muted"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Click="OnClientModeClick" />
+                    </Grid>
+                </StackPanel>
+
+                <!-- Display name (client only) -->
+                <StackPanel x:Name="DisplayNameRow" Spacing="8" IsVisible="False">
+                    <TextBlock Text="DISPLAY NAME"
+                               FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
+                               Foreground="{StaticResource AppTextMutedBrush}" />
+                    <TextBox x:Name="DisplayNameInput"
+                             Watermark="e.g. laptop-01"
+                             Foreground="{StaticResource AppTextBrush}" />
+                </StackPanel>
+
+                <!-- Address (client only) -->
+                <StackPanel x:Name="AddressRow" Spacing="8" IsVisible="False">
+                    <TextBlock Text="SERVER ADDRESS"
+                               FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
+                               Foreground="{StaticResource AppTextMutedBrush}" />
+                    <TextBox x:Name="AddressInput"
+                             Text="127.0.0.1"
+                             Foreground="{StaticResource AppTextBrush}" />
+                </StackPanel>
+
+                <!-- Port -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="PORT"
+                               FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
+                               Foreground="{StaticResource AppTextMutedBrush}" />
+                    <TextBox x:Name="PortInput"
+                             Text="3000"
+                             Foreground="{StaticResource AppTextBrush}" />
+                </StackPanel>
+
+                <!-- Advanced options (collapsible) -->
+                <StackPanel Spacing="0">
+                    <Button Classes="collapse"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            Click="OnAdvancedToggleClick">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock x:Name="AdvancedArrow"
+                                       Text="▶"
+                                       FontSize="10"
+                                       Foreground="{StaticResource AppTextMutedBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Advanced"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{StaticResource AppTextMutedBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
+                    <StackPanel x:Name="AdvancedPanel" IsVisible="False" Spacing="20" Margin="0,16,0,0">
+
+                        <!-- Protocol -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="PROTOCOL"
+                                       FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
+                                       Foreground="{StaticResource AppTextMutedBrush}" />
+                            <ComboBox x:Name="ProtocolCombo"
+                                      HorizontalAlignment="Stretch"
+                                      SelectedIndex="0">
+                                <ComboBoxItem Content="TCP" />
+                                <ComboBoxItem Content="UDP" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- Timeout (server only) -->
+                        <StackPanel x:Name="TimeoutRow" Spacing="8">
+                            <TextBlock Text="CLIENT TIMEOUT (s)"
+                                       FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
+                                       Foreground="{StaticResource AppTextMutedBrush}" />
+                            <NumericUpDown x:Name="TimeoutInput"
+                                           Value="30" Minimum="5" Maximum="300" Increment="5"
+                                           FormatString="0"
+                                           Foreground="{StaticResource AppTextBrush}" />
+                        </StackPanel>
+
+                        <!-- Heartbeat interval (client only) -->
+                        <StackPanel x:Name="HeartbeatRow" Spacing="8" IsVisible="False">
+                            <TextBlock Text="HEARTBEAT INTERVAL (s)"
+                                       FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
+                                       Foreground="{StaticResource AppTextMutedBrush}" />
+                            <NumericUpDown x:Name="HeartbeatInput"
+                                           Value="5" Minimum="1" Maximum="60" Increment="1"
+                                           FormatString="0"
+                                           Foreground="{StaticResource AppTextBrush}" />
+                        </StackPanel>
+
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Connect button -->
+                <Button Content="Start"
+                        Classes="accent"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        Padding="0,12"
+                        FontSize="15" FontWeight="SemiBold"
+                        Click="OnConnectClick" />
+
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
