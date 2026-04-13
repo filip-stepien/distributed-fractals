@@ -7,16 +7,16 @@ using DistributedFractals.Server.Messages;
 namespace DistributedFractals.Gui.Networking;
 
 /// <summary>
-/// IMessageServer decorator that exposes outgoing RenderFractalMessage
+/// IMessageServer decorator that exposes outgoing RenderFrameMessage
 /// dispatches as an event, so the GUI can show "frame X sent to client Y".
 /// All other operations forward to the inner server unchanged.
 /// </summary>
 public sealed class TrackingMessageServer(IMessageServer inner) : IMessageServer
 {
-    public event Action<Guid, RenderFractalMessage>? RenderFrameSent;
+    public event Action<ClientIdentifier, RenderFrameMessage>? RenderFrameSent;
 
     public Guid Identifier => inner.Identifier;
-    public IReadOnlyCollection<Guid> Clients => inner.Clients;
+    public IReadOnlyCollection<ClientIdentifier> Clients => inner.Clients;
 
     public event Action<BaseMessage>? MessageReceived
     {
@@ -24,31 +24,31 @@ public sealed class TrackingMessageServer(IMessageServer inner) : IMessageServer
         remove => inner.MessageReceived -= value;
     }
 
-    public event Action<Guid>? ClientRegistered
+    public event Action<ClientIdentifier>? ClientRegistered
     {
         add => inner.ClientRegistered += value;
         remove => inner.ClientRegistered -= value;
     }
 
-    public event Action<Guid>? ClientUnregistered
+    public event Action<ClientIdentifier>? ClientUnregistered
     {
         add => inner.ClientUnregistered += value;
         remove => inner.ClientUnregistered -= value;
     }
 
-    public void RegisterClient(Guid client) => inner.RegisterClient(client);
-    public void UnregisterClient(Guid client) => inner.UnregisterClient(client);
+    public void RegisterClient(ClientIdentifier client) => inner.RegisterClient(client);
+    public void UnregisterClient(ClientIdentifier client) => inner.UnregisterClient(client);
 
     public string? GetClientAddress(Guid clientId) => inner.GetClientAddress(clientId);
 
-    public Task SendToClientAsync(Guid clientIdentifier, BaseMessage baseMessage)
+    public Task SendToClientAsync(ClientIdentifier client, BaseMessage message)
     {
-        if (baseMessage is RenderFractalMessage render)
-            RenderFrameSent?.Invoke(clientIdentifier, render);
-        return inner.SendToClientAsync(clientIdentifier, baseMessage);
+        if (message is RenderFrameMessage render)
+            RenderFrameSent?.Invoke(client, render);
+        return inner.SendToClientAsync(client, message);
     }
 
-    public Task BroadcastAsync(BaseMessage baseMessage) => inner.BroadcastAsync(baseMessage);
+    public Task BroadcastAsync(BaseMessage message) => inner.BroadcastAsync(message);
 
     public Task StartAsync() => inner.StartAsync();
 

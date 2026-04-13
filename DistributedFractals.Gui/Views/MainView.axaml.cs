@@ -7,10 +7,11 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using DistributedFractals.Core.Colorizers;
-using DistributedFractals.Core.Core;
-using DistributedFractals.Core.Generators.Mandelbrot;
-using DistributedFractals.Core.Zoom;
+using DistributedFractals.Fractal.Colorizers;
+using DistributedFractals.Fractal.Core;
+using DistributedFractals.Fractal.Generators.Mandelbrot;
+using DistributedFractals.Fractal.Mandelbrot;
+using DistributedFractals.Fractal.Zoom;
 using DistributedFractals.Gui.Networking;
 
 namespace DistributedFractals.Gui.Views;
@@ -21,6 +22,7 @@ public partial class MainView : UserControl
 
     // Fractal state
     private MandelbrotOptions _previewOptions = BuildBaseOptions(800, 600, 500);
+    private FrameBounds _previewBounds;
     private readonly List<ZoomKeyframe> _keyframes = [];
 
     // Default Mandelbrot framing: full set centered at (-0.75, 0) with Re range 3.5.
@@ -31,12 +33,12 @@ public partial class MainView : UserControl
     private const double DefaultCenterIm = 0.0;
 
     private static MandelbrotOptions BuildBaseOptions(int width, int height, ulong maxIter)
+        => new(Width: (ulong)width, Height: (ulong)height, MaxIterations: maxIter);
+
+    private static FrameBounds BuildDefaultBounds(int width, int height)
     {
         double imRange = DefaultReRange * height / width;
-        return new MandelbrotOptions(
-            Width: (ulong)width,
-            Height: (ulong)height,
-            MaxIterations: maxIter,
+        return new FrameBounds(
             MinRe: DefaultCenterRe - DefaultReRange / 2.0,
             MaxRe: DefaultCenterRe + DefaultReRange / 2.0,
             MinIm: DefaultCenterIm - imRange / 2.0,
@@ -59,6 +61,7 @@ public partial class MainView : UserControl
     public MainView(bool isServerMode)
     {
         _isServerMode = isServerMode;
+        _previewBounds = BuildDefaultBounds(800, 600);
         InitializeComponent();
 
         RebuildKeyframesList();
@@ -77,22 +80,22 @@ public partial class MainView : UserControl
 
         // Use the same base bounds the renderer will use, so the preview matches
         // KeyframeZoomSequenceGenerator's math exactly (it scales reRange/imRange by kf.Scale).
-        var baseOptions = BuildBaseOptions(width, height, maxIter);
-        double halfRe = (baseOptions.MaxRe - baseOptions.MinRe) * kf.Scale / 2.0;
-        double halfIm = (baseOptions.MaxIm - baseOptions.MinIm) * kf.Scale / 2.0;
+        FrameBounds defaultBounds = BuildDefaultBounds(width, height);
+        double halfRe = (defaultBounds.MaxRe - defaultBounds.MinRe) * kf.Scale / 2.0;
+        double halfIm = (defaultBounds.MaxIm - defaultBounds.MinIm) * kf.Scale / 2.0;
 
-        var options = baseOptions with
-        {
-            MinRe = kf.CenterRe - halfRe,
-            MaxRe = kf.CenterRe + halfRe,
-            MinIm = kf.CenterIm - halfIm,
-            MaxIm = kf.CenterIm + halfIm,
-        };
+        FrameBounds kfBounds = new(
+            MinRe: kf.CenterRe - halfRe,
+            MaxRe: kf.CenterRe + halfRe,
+            MinIm: kf.CenterIm - halfIm,
+            MaxIm: kf.CenterIm + halfIm);
 
-        return GeneratePreviewAsync(options);
+        return GeneratePreviewAsync(
+            BuildBaseOptions(width, height, maxIter),
+            kfBounds);
     }
 
-    private async Task GeneratePreviewAsync(MandelbrotOptions? overrideOptions = null)
+    private async Task GeneratePreviewAsync(MandelbrotOptions? overrideOptions = null, FrameBounds? overrideBounds = null)
     {
         RenderOverlay.IsVisible = true;
 
@@ -103,13 +106,17 @@ public partial class MainView : UserControl
             ulong maxIter = (ulong)(MaxIterationsInput.Value ?? 500);
 
             _previewOptions = overrideOptions ?? BuildBaseOptions(width, height, maxIter);
+            _previewBounds  = overrideBounds  ?? BuildDefaultBounds(width, height);
 
             IFractalColorizer colorizer = ColorizerCombo.SelectedIndex == 0
                 ? new BlackAndWhiteColorizer()
                 : new CyclingHsvColorizer();
 
+            MandelbrotOptions opts   = _previewOptions;
+            FrameBounds       bounds = _previewBounds;
+
             FractalResult result = await Task.Run(() =>
-                new MandelbrotGenerator().Generate(_previewOptions, colorizer));
+                new MandelbrotGenerator().Generate(opts, bounds, colorizer));
 
             var bitmap = new WriteableBitmap(
                 new PixelSize(width, height),
@@ -244,17 +251,17 @@ public partial class MainView : UserControl
         double cImgX = (selLeft + selW / 2.0 - offX) / renderScale;
         double cImgY = (selTop  + selH / 2.0 - offY) / renderScale;
 
-        // Map image pixels → complex plane coordinates
-        double reRange = _previewOptions.MaxRe - _previewOptions.MinRe;
-        double imRange = _previewOptions.MaxIm - _previewOptions.MinIm;
-        double centerRe = _previewOptions.MinRe + (cImgX / imgW) * reRange;
-        double centerIm = _previewOptions.MinIm + (cImgY / imgH) * imRange;
+        // Map image pixels → complex plane coordinates using current preview bounds
+        double reRange = _previewBounds.MaxRe - _previewBounds.MinRe;
+        double imRange = _previewBounds.MaxIm - _previewBounds.MinIm;
+        double centerRe = _previewBounds.MinRe + (cImgX / imgW) * reRange;
+        double centerIm = _previewBounds.MinIm + (cImgY / imgH) * imRange;
 
         // Scale is interpreted by KeyframeZoomSequenceGenerator as a fraction of the *base*
         // complex range, NOT the current preview's range. If we're already zoomed in, the
         // current preview itself only covers `currentScale` of the base range, so the new
         // keyframe's scale must be that compounded with the selection's fraction of the preview.
-        double currentScale = (_previewOptions.MaxRe - _previewOptions.MinRe) / DefaultReRange;
+        double currentScale = (_previewBounds.MaxRe - _previewBounds.MinRe) / DefaultReRange;
         double selectionFraction = selW / renderScale / imgW;
         double scale = currentScale * selectionFraction;
 

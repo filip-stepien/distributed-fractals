@@ -1,4 +1,4 @@
-using DistributedFractals.Core.Core;
+using DistributedFractals.Fractal.Core;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.PixelFormats;

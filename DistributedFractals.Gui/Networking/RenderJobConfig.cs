@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using DistributedFractals.Core.Core;
-using DistributedFractals.Core.Generators.Mandelbrot;
-using DistributedFractals.Core.Zoom;
+using DistributedFractals.Fractal.Colorizers;
+using DistributedFractals.Fractal.Mandelbrot;
+using DistributedFractals.Fractal.Zoom;
 
 namespace DistributedFractals.Gui.Networking;
 

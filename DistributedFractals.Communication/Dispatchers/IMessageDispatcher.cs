@@ -1,7 +1,7 @@
 ﻿using DistributedFractals.Server.Handlers;
 using DistributedFractals.Server.Messages;
 
-namespace DistributedFractals.Server.Dispatching;
+namespace DistributedFractals.Server.Dispatchers;
 
 public interface IMessageDispatcher
 {

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DistributedFractals.Fractal\DistributedFractals.Fractal.csproj" />
+    <ProjectReference Include="..\DistributedFractals.Communication\DistributedFractals.Communication.csproj" />
+    <ProjectReference Include="..\DistributedFractals.Orchestration\DistributedFractals.Orchestration.csproj" />
+    <ProjectReference Include="..\DistributedFractals.Video\DistributedFractals.Video.csproj" />
+    <ProjectReference Include="..\DistributedFractals.Logging\DistributedFractals.Logging.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Messages;
-using DistributedFractals.Server.Serialization;
+using DistributedFractals.Server.Serializers;
 
 namespace DistributedFractals.Server.Udp;
 
@@ -15,9 +15,9 @@ public class UdpServer(IPAddress listenAddress, int port, ISerializer serializer
     private System.Net.Sockets.UdpClient? _udpClient;
     private CancellationTokenSource? _cts;
 
-    public override void UnregisterClient(Guid client)
+    public override void UnregisterClient(ClientIdentifier client)
     {
-        _endpoints.TryRemove(client, out _);
+        _endpoints.TryRemove(client.Id, out _);
         base.UnregisterClient(client);
     }
 
@@ -46,25 +46,25 @@ public class UdpServer(IPAddress listenAddress, int port, ISerializer serializer
         return ValueTask.CompletedTask;
     }
 
-    public override async Task SendToClientAsync(Guid clientIdentifier, BaseMessage baseMessage)
+    public override async Task SendToClientAsync(ClientIdentifier client, BaseMessage message)
     {
-        if (!Clients.Contains(clientIdentifier))
+        if (!Clients.Contains(client))
         {
-            throw new InvalidOperationException($"Worker '{clientIdentifier}' is not registered.");
+            throw new InvalidOperationException($"Client '{client.Id}' is not registered.");
         }
 
-        if (!_endpoints.TryGetValue(clientIdentifier, out IPEndPoint? endpoint))
+        if (!_endpoints.TryGetValue(client.Id, out IPEndPoint? endpoint))
         {
-            throw new InvalidOperationException($"Worker '{clientIdentifier}' endpoint is unknown.");
+            throw new InvalidOperationException($"Client '{client.Id}' endpoint is unknown.");
         }
 
-        byte[] data = serializer.Serialize(baseMessage).ToArray();
+        byte[] data = serializer.Serialize(message).ToArray();
         await _udpClient!.SendAsync(data, endpoint);
     }
 
-    public override async Task BroadcastAsync(BaseMessage baseMessage)
+    public override async Task BroadcastAsync(BaseMessage message)
     {
-        byte[] data = serializer.Serialize(baseMessage).ToArray();
+        byte[] data = serializer.Serialize(message).ToArray();
         foreach (IPEndPoint endpoint in _endpoints.Values)
         {
             await _udpClient!.SendAsync(data, endpoint);

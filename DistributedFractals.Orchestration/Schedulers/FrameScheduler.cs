@@ -1,4 +1,5 @@
-using DistributedFractals.Core.Core;
+using DistributedFractals.Fractal.Core;
+using DistributedFractals.Logging;
 using DistributedFractals.Orchestration.Selectors;
 using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Messages;
@@ -7,31 +8,38 @@ namespace DistributedFractals.Orchestration.Schedulers;
 
 public sealed class FrameScheduler : IFrameScheduler
 {
-    private readonly IMessageServer _master;
-    private readonly IClientSelector _selector;
-    private readonly int _framesPerWorker;
+    private readonly IMessageServer _server;
+    private readonly IClientSelector _clientSelector;
+    private readonly int _framesPerClient;
     private readonly int _totalFrames;
 
-    private readonly Queue<(int index, RenderFractalMessage msg)> _pending;
-    private readonly Dictionary<Guid, List<(int index, RenderFractalMessage msg)>> _inFlight = new();
+    private readonly Queue<RenderFrameMessage> _pending;
+    private readonly Dictionary<ClientIdentifier, List<(RenderFrameMessage msg, DateTime dispatchedAt)>> _inFlight = new();
     private readonly SortedDictionary<int, FractalResult> _completed = new();
     private readonly object _lock = new();
     private readonly TaskCompletionSource _allDone = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+    public event Action<ClientIdentifier, int>? FrameDispatched;
+    public event Action<ClientIdentifier, int, TimeSpan>? FrameCompleted;
+    public event Action<ClientIdentifier, int>? FrameFailed;
+    public event Action? RenderCompleted;
+
     public FrameScheduler(
-        IMessageServer master,
-        IEnumerable<(int index, RenderFractalMessage msg)> frames,
-        IClientSelector selector,
-        int framesPerWorker = 1)
+        IMessageServer server,
+        IEnumerable<RenderFrameMessage> frames,
+        IClientSelector clientSelector,
+        int framesPerClient = 1)
     {
-        _master = master;
-        _selector = selector;
-        _framesPerWorker = framesPerWorker;
-        _pending = new Queue<(int, RenderFractalMessage)>(frames);
+        _server = server;
+        _clientSelector = clientSelector;
+        _framesPerClient = framesPerClient;
+        _pending = new Queue<RenderFrameMessage>(frames);
         _totalFrames = _pending.Count;
 
         if (_totalFrames == 0)
+        {
             _allDone.TrySetResult();
+        }
     }
 
     public Task WaitForAllAsync() => _allDone.Task;
@@ -39,30 +47,54 @@ public sealed class FrameScheduler : IFrameScheduler
     public IReadOnlyList<FractalResult> GetOrderedResults()
     {
         lock (_lock)
+        {
             return _completed.Values.ToList();
+        }
     }
 
-    public void OnClientAvailable(Guid client)
+    public void Cancel()
     {
         lock (_lock)
         {
-            _inFlight.TryAdd(client, []);
+            _pending.Clear();
+            _allDone.TrySetCanceled();
+        }
+    }
+
+    public void OnClientAvailable(ClientIdentifier client)
+    {
+        lock (_lock)
+        {
+            _inFlight.TryAdd(client, new List<(RenderFrameMessage msg, DateTime dispatchedAt)>());
             TryDispatch();
         }
     }
 
-    public void OnResultReceived(Guid client, int frameIndex, FractalResult result)
+    public void OnResultReceived(Guid clientId, int frameIndex, FractalResult result)
     {
         lock (_lock)
         {
-            if (_inFlight.TryGetValue(client, out var frames))
-                frames.RemoveAll(f => f.index == frameIndex);
+            ClientIdentifier? client = _inFlight.Keys.FirstOrDefault(c => c.Id == clientId);
+            if (client is null)
+            {
+                return;
+            }
+
+            DateTime dispatchedAt = default;
+            List<(RenderFrameMessage msg, DateTime dispatchedAt)> frames = _inFlight[client];
+            (RenderFrameMessage msg, DateTime dispatchedAt) match = frames.FirstOrDefault(f => f.msg.FrameIndex == frameIndex);
+            dispatchedAt = match.dispatchedAt;
+            frames.RemoveAll(f => f.msg.FrameIndex == frameIndex);
+
+            TimeSpan duration = dispatchedAt != default ? DateTime.UtcNow - dispatchedAt : TimeSpan.Zero;
 
             _completed[frameIndex] = result;
-            Console.WriteLine($"[MASTER] Frame {frameIndex} received from client {client} ({_completed.Count}/{_totalFrames}).");
+            Logger.Log($"Frame {frameIndex} received from client {client.DisplayName} ({_completed.Count}/{_totalFrames}).");
+            FrameCompleted?.Invoke(client, frameIndex, duration);
 
             if (_completed.Count == _totalFrames)
             {
+                RenderCompleted?.Invoke();
                 _allDone.TrySetResult();
                 return;
             }
@@ -71,16 +103,17 @@ public sealed class FrameScheduler : IFrameScheduler
         }
     }
 
-    public void OnClientFailed(Guid client)
+    public void OnClientFailed(ClientIdentifier client)
     {
         lock (_lock)
         {
-            if (_inFlight.Remove(client, out var frames))
+            if (_inFlight.Remove(client, out List<(RenderFrameMessage msg, DateTime dispatchedAt)>? frames))
             {
-                foreach (var frame in frames)
+                foreach ((RenderFrameMessage msg, DateTime dispatchedAt) frame in frames)
                 {
-                    Console.WriteLine($"[MASTER] Re-queuing frame {frame.index} after client {client} failed.");
-                    _pending.Enqueue(frame);
+                    Logger.Log($"Re-queuing frame {frame.msg.FrameIndex} after client {client.DisplayName} failed.");
+                    _pending.Enqueue(frame.msg);
+                    FrameFailed?.Invoke(client, frame.msg.FrameIndex);
                 }
             }
 
@@ -92,18 +125,22 @@ public sealed class FrameScheduler : IFrameScheduler
     {
         while (_pending.Count > 0)
         {
-            var workersWithCapacity = _inFlight
-                .Where(kv => kv.Value.Count < _framesPerWorker)
+            List<ClientIdentifier> clientsWithCapacity = _inFlight
+                .Where(kv => kv.Value.Count < _framesPerClient)
                 .Select(kv => kv.Key)
                 .ToList();
 
-            Guid? client = _selector.Select(workersWithCapacity);
-            if (client is null) break;
+            ClientIdentifier? client = _clientSelector.Select(clientsWithCapacity);
+            if (client is null)
+            {
+                break;
+            }
 
-            var frame = _pending.Dequeue();
-            _inFlight[client.Value].Add(frame);
-            Console.WriteLine($"[MASTER] Sending frame {frame.index} to client {client.Value}.");
-            _ = _master.SendToClientAsync(client.Value, frame.msg);
+            RenderFrameMessage msg = _pending.Dequeue();
+            _inFlight[client].Add((msg, DateTime.UtcNow));
+            Logger.Log($"Sending frame {msg.FrameIndex} to client {client.DisplayName}.");
+            FrameDispatched?.Invoke(client, msg.FrameIndex);
+            _ = _server.SendToClientAsync(client, msg);
         }
     }
 }

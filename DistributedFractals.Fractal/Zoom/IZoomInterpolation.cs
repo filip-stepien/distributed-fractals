@@ -1,4 +1,4 @@
-namespace DistributedFractals.Core.Zoom;
+namespace DistributedFractals.Fractal.Zoom;
 
 public interface IZoomInterpolation
 {

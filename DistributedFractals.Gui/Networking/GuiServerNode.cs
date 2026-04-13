@@ -2,13 +2,13 @@ using System;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Threading.Tasks;
-using DistributedFractals.Core.Core;
+using DistributedFractals.Fractal.Core;
 using DistributedFractals.Server.Core;
-using DistributedFractals.Server.Dispatching;
+using DistributedFractals.Server.Dispatchers;
 using DistributedFractals.Server.Handlers;
 using DistributedFractals.Server.Heartbeat;
 using DistributedFractals.Server.Messages;
-using DistributedFractals.Server.Serialization;
+using DistributedFractals.Server.Serializers;
 using DistributedFractals.Server.Tcp;
 
 namespace DistributedFractals.Gui.Networking;
@@ -23,8 +23,8 @@ public sealed class GuiServerNode : IAsyncDisposable
 {
     public HeartbeatMessageServer Server { get; }
 
-    public event Action<Guid>? ClientRegistered;
-    public event Action<Guid>? ClientUnregistered;
+    public event Action<ClientIdentifier>? ClientRegistered;
+    public event Action<ClientIdentifier>? ClientUnregistered;
 
     private IFrameResultReceiver? _currentRenderReceiver;
     private readonly ConcurrentDictionary<Guid, string> _displayNames = new();
@@ -42,7 +42,7 @@ public sealed class GuiServerNode : IAsyncDisposable
         dispatcher.Register(new HeartbeatMessageHandler(Server));
         dispatcher.Register(new RenderResultForwardingHandler(this));
 
-        Server.ClientUnregistered += id => _displayNames.TryRemove(id, out _);
+        Server.ClientUnregistered += id => _displayNames.TryRemove(id.Id, out _);
 
         Server.MessageReceived += async message => await dispatcher.DispatchAsync(message);
         Server.ClientRegistered   += id => ClientRegistered?.Invoke(id);
@@ -57,8 +57,8 @@ public sealed class GuiServerNode : IAsyncDisposable
     internal void SetCurrentRenderReceiver(IFrameResultReceiver? receiver) => _currentRenderReceiver = receiver;
 
     /// <summary>Returns the display name a client supplied in its JoinMessage, or null if none.</summary>
-    public string? GetDisplayName(Guid clientId)
-        => _displayNames.TryGetValue(clientId, out string? name) ? name : null;
+    public string? GetDisplayName(ClientIdentifier client)
+        => _displayNames.TryGetValue(client.Id, out string? name) ? name : null;
 
     private sealed class DisplayNameCaptureHandler(GuiServerNode owner) : IMessageHandler<JoinMessage>
     {

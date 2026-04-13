@@ -4,12 +4,12 @@ using System.Net;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Threading;
-using DistributedFractals.Core.Core;
-using DistributedFractals.Core.Generators.Mandelbrot;
-using DistributedFractals.Core.Zoom;
-using DistributedFractals.Core.Zoom.Interpolations;
+using DistributedFractals.Fractal.Mandelbrot;
+using DistributedFractals.Fractal.Zoom;
+using DistributedFractals.Fractal.Zoom.Interpolations;
 using DistributedFractals.Gui.Networking;
 using DistributedFractals.Gui.Views;
+using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Messages;
 
 namespace DistributedFractals.Gui;
@@ -41,17 +41,17 @@ public partial class MainWindow : Window
             ContentArea.Content = new MainView(isServerMode);
 
             _serverNode = new GuiServerNode(IPAddress.Any, port, TimeSpan.FromSeconds(timeoutOrHeartbeatSeconds));
-            _serverNode.ClientRegistered += id => Dispatcher.UIThread.Post(() =>
+            _serverNode.ClientRegistered += client => Dispatcher.UIThread.Post(() =>
             {
-                string name = _serverNode?.GetDisplayName(id) ?? string.Empty;
-                string addr = _serverNode?.Server.GetClientAddress(id) ?? "unknown";
-                ClientsPanel.OnClientConnected(id.ToString(), name, addr);
-                Log($"Client {(string.IsNullOrWhiteSpace(name) ? id.ToString() : name)} joined from {addr}");
+                string name = _serverNode?.GetDisplayName(client) ?? string.Empty;
+                string addr = _serverNode?.Server.GetClientAddress(client.Id) ?? "unknown";
+                ClientsPanel.OnClientConnected(client.Id.ToString(), name, addr);
+                Log($"Client {(string.IsNullOrWhiteSpace(name) ? client.Id.ToString() : name)} joined from {addr}");
             });
-            _serverNode.ClientUnregistered += id => Dispatcher.UIThread.Post(() =>
+            _serverNode.ClientUnregistered += client => Dispatcher.UIThread.Post(() =>
             {
-                ClientsPanel.OnClientDisconnected(id.ToString());
-                Log($"Client {id} left");
+                ClientsPanel.OnClientDisconnected(client.Id.ToString());
+                Log($"Client {client.Id} left");
             });
 
             Log($"Starting server on 0.0.0.0:{port} (timeout {timeoutOrHeartbeatSeconds}s)...");
@@ -184,32 +184,32 @@ public partial class MainWindow : Window
             return view;
         }
 
-        // Build interpolated frame sequence from keyframes (same as _ServerTest).
-        var sequence = new KeyframeZoomSequenceGenerator<MandelbrotOptions>()
+        // Build interpolated frame bounds sequence from keyframes.
+        var bounds = new KeyframeZoomSequenceGenerator()
             .Generate(config.BaseOptions, config.Keyframes, config.TotalFrames, new SmoothStepInterpolation())
             .ToList();
 
-        var frames = sequence
-            .Select((opts, i) => (i, new RenderFractalMessage(
+        var frames = bounds
+            .Select((b, i) => new RenderFrameMessage(
                 _serverNode.Server.Identifier,
                 i,
-                FractalGeneratorType.Mandelbrot,
                 config.Colorizer,
-                opts)))
+                config.BaseOptions,
+                b))
             .ToList();
 
         var job = new GuiRenderJob(_serverNode, frames, config.OutputPath, config.FrameRate);
         _currentJob = job;
 
-        job.ClientAvailable += id => Dispatcher.UIThread.Post(() =>
+        job.ClientAvailable += client => Dispatcher.UIThread.Post(() =>
         {
-            string name = _serverNode?.GetDisplayName(id) ?? string.Empty;
-            string addr = _serverNode?.Server.GetClientAddress(id) ?? "unknown";
-            view.OnClientConnected(id.ToString(), name, addr);
+            string name = _serverNode?.GetDisplayName(client) ?? string.Empty;
+            string addr = _serverNode?.Server.GetClientAddress(client.Id) ?? "unknown";
+            view.OnClientConnected(client.Id.ToString(), name, addr);
         });
-        job.ClientFailed    += id => Dispatcher.UIThread.Post(() => view.OnClientDisconnected(id.ToString()));
-        job.FrameDispatched += (id, idx) => Dispatcher.UIThread.Post(() => view.OnFrameDispatched(id.ToString(), idx));
-        job.FrameCompleted  += (id, idx, dur) => Dispatcher.UIThread.Post(() => view.OnFrameCompleted(id.ToString(), idx, dur));
+        job.ClientFailed    += client => Dispatcher.UIThread.Post(() => view.OnClientDisconnected(client.Id.ToString()));
+        job.FrameDispatched += (client, idx) => Dispatcher.UIThread.Post(() => view.OnFrameDispatched(client.Id.ToString(), idx));
+        job.FrameCompleted  += (client, idx, dur) => Dispatcher.UIThread.Post(() => view.OnFrameCompleted(client.Id.ToString(), idx, dur));
         job.Completed       += path => Dispatcher.UIThread.Post(() => Log($"Render complete. GIF saved: {path}"));
         job.Failed          += ex => Dispatcher.UIThread.Post(() => Log($"Render failed: {ex.Message}"));
 

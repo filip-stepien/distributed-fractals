@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using DistributedFractals.Core.Core;
+using DistributedFractals.Fractal.Core;
 using DistributedFractals.Orchestration.Schedulers;
 using DistributedFractals.Orchestration.Selectors;
 using DistributedFractals.Server.Core;
@@ -18,27 +18,25 @@ namespace DistributedFractals.Gui.Networking;
 public sealed class GuiRenderJob : IFrameResultReceiver
 {
     private readonly GuiServerNode _serverNode;
-    private readonly TrackingMessageServer _trackingServer;
     private readonly FrameScheduler _scheduler;
     private readonly string _outputPath;
     private readonly int _frameRate;
 
-    private readonly Dictionary<int, DateTime> _dispatchedAt = new();
-    private readonly HashSet<Guid> _knownClients = new();
+    private readonly HashSet<ClientIdentifier> _knownClients = new();
     private readonly object _lock = new();
 
     public int TotalFrames { get; }
 
-    public event Action<Guid>? ClientAvailable;
-    public event Action<Guid, int>? FrameDispatched;
-    public event Action<Guid, int, TimeSpan>? FrameCompleted;
-    public event Action<Guid>? ClientFailed;
+    public event Action<ClientIdentifier>? ClientAvailable;
+    public event Action<ClientIdentifier, int>? FrameDispatched;
+    public event Action<ClientIdentifier, int, TimeSpan>? FrameCompleted;
+    public event Action<ClientIdentifier>? ClientFailed;
     public event Action<string>? Completed;
     public event Action<Exception>? Failed;
 
     public GuiRenderJob(
         GuiServerNode serverNode,
-        IEnumerable<(int index, RenderFractalMessage msg)> frames,
+        IEnumerable<RenderFrameMessage> frames,
         string outputPath,
         int frameRate)
     {
@@ -46,13 +44,12 @@ public sealed class GuiRenderJob : IFrameResultReceiver
         _outputPath = outputPath;
         _frameRate = frameRate;
 
-        var frameList = new List<(int, RenderFractalMessage)>(frames);
+        var frameList = new List<RenderFrameMessage>(frames);
         TotalFrames = frameList.Count;
 
-        _trackingServer = new TrackingMessageServer(serverNode.Server);
-        _trackingServer.RenderFrameSent += OnFrameSent;
-
-        _scheduler = new FrameScheduler(_trackingServer, frameList, new RoundRobinClientSelector(), framesPerWorker: 1);
+        _scheduler = new FrameScheduler(serverNode.Server, frameList, new RoundRobinClientSelector(), framesPerClient: 1);
+        _scheduler.FrameDispatched += (client, frameIndex) => FrameDispatched?.Invoke(client, frameIndex);
+        _scheduler.FrameCompleted  += (client, frameIndex, duration) => FrameCompleted?.Invoke(client, frameIndex, duration);
     }
 
     public Task StartAsync()
@@ -65,8 +62,8 @@ public sealed class GuiRenderJob : IFrameResultReceiver
         _serverNode.Server.ClientRegistered   += OnClientRegistered;
         _serverNode.Server.ClientUnregistered += OnClientUnregistered;
 
-        foreach (Guid id in _serverNode.Server.Clients)
-            OnClientRegistered(id);
+        foreach (ClientIdentifier client in _serverNode.Server.Clients)
+            OnClientRegistered(client);
 
         return Task.Run(RunAsync);
     }
@@ -96,49 +93,28 @@ public sealed class GuiRenderJob : IFrameResultReceiver
         }
     }
 
-    private void OnClientRegistered(Guid id)
+    private void OnClientRegistered(ClientIdentifier client)
     {
         lock (_lock)
         {
-            if (!_knownClients.Add(id)) return;
+            if (!_knownClients.Add(client)) return;
         }
-        _scheduler.OnClientAvailable(id);
-        ClientAvailable?.Invoke(id);
+        _scheduler.OnClientAvailable(client);
+        ClientAvailable?.Invoke(client);
     }
 
-    private void OnClientUnregistered(Guid id)
+    private void OnClientUnregistered(ClientIdentifier client)
     {
         lock (_lock)
         {
-            if (!_knownClients.Remove(id)) return;
+            if (!_knownClients.Remove(client)) return;
         }
-        _scheduler.OnClientFailed(id);
-        ClientFailed?.Invoke(id);
+        _scheduler.OnClientFailed(client);
+        ClientFailed?.Invoke(client);
     }
 
-    private void OnFrameSent(Guid clientId, RenderFractalMessage msg)
+    void IFrameResultReceiver.OnResultReceived(Guid clientId, int frameIndex, FractalResult result)
     {
-        lock (_lock) _dispatchedAt[msg.FrameIndex] = DateTime.UtcNow;
-        FrameDispatched?.Invoke(clientId, msg.FrameIndex);
-    }
-
-    void IFrameResultReceiver.OnResultReceived(Guid client, int frameIndex, FractalResult result)
-    {
-        TimeSpan duration;
-        lock (_lock)
-        {
-            if (_dispatchedAt.TryGetValue(frameIndex, out DateTime started))
-            {
-                duration = DateTime.UtcNow - started;
-                _dispatchedAt.Remove(frameIndex);
-            }
-            else
-            {
-                duration = TimeSpan.Zero;
-            }
-        }
-
-        _scheduler.OnResultReceived(client, frameIndex, result);
-        FrameCompleted?.Invoke(client, frameIndex, duration);
+        _scheduler.OnResultReceived(clientId, frameIndex, result);
     }
 }

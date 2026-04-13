@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using DistributedFractals.Core.Core;
+using DistributedFractals.Fractal.Core;
 
 namespace DistributedFractals.Gui.Networking;
 

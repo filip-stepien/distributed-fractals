@@ -1,24 +1,20 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using DistributedFractals.Core.Colorizers;
-using DistributedFractals.Core.Core;
-using DistributedFractals.Core.Generators.Mandelbrot;
+using DistributedFractals.Fractal.Core;
 using DistributedFractals.Server.Core;
-using DistributedFractals.Server.Dispatching;
-using DistributedFractals.Server.Handlers;
+using DistributedFractals.Server.Dispatchers;
 using DistributedFractals.Server.Messages;
-using DistributedFractals.Server.Serialization;
+using DistributedFractals.Server.Serializers;
 using DistributedFractals.Server.Tcp;
 
 namespace DistributedFractals.Gui.Networking;
 
 /// <summary>
 /// GUI-side wrapper for a TCP client node.
-/// Connects, sends JoinMessage, runs heartbeat, handles RenderFractalMessage with
+/// Connects, sends JoinMessage, runs heartbeat, handles RenderFrameMessage with
 /// the configured generators / colorizers, and surfaces lifecycle + per-frame events.
 /// </summary>
 public sealed class GuiClientNode : IAsyncDisposable
@@ -43,19 +39,13 @@ public sealed class GuiClientNode : IAsyncDisposable
         _heartbeatInterval = heartbeatInterval;
         _displayName = displayName ?? string.Empty;
 
-        var generators = new Dictionary<FractalGeneratorType, IFractalGenerator<MandelbrotOptions>>
-        {
-            [FractalGeneratorType.Mandelbrot] = new MandelbrotGenerator(),
-        };
-        var colorizers = new Dictionary<FractalColorizerType, IFractalColorizer>
-        {
-            [FractalColorizerType.BlackAndWhite] = new BlackAndWhiteColorizer(),
-            [FractalColorizerType.CyclingHsv]    = new CyclingHsvColorizer(),
-        };
-
-        var dispatcher = new MessageDispatcher();
-        dispatcher.Register(new DisconnectNotifyingHandler(this));
-        dispatcher.Register(new InstrumentedRenderHandler(this, _client, generators, colorizers));
+        var dispatcher = MessageDispatcherFactory.CreateClient(
+            _client,
+            onFrameStarted: frameIndex => FrameStarted?.Invoke(frameIndex),
+            onFrameCompleted: (frameIndex, duration, result) => FrameCompleted?.Invoke(frameIndex, duration, result),
+            onFrameFailed: frameIndex => FrameFailed?.Invoke(frameIndex, new Exception($"Frame {frameIndex} failed")),
+            onDisconnected: () => Disconnected?.Invoke()
+        );
 
         _client.MessageReceived += async message => await dispatcher.DispatchAsync(message);
     }
@@ -85,12 +75,6 @@ public sealed class GuiClientNode : IAsyncDisposable
         }
     }
 
-    internal void RaiseDisconnected() => Disconnected?.Invoke();
-    internal void RaiseFrameStarted(int frameIndex) => FrameStarted?.Invoke(frameIndex);
-    internal void RaiseFrameCompleted(int frameIndex, TimeSpan duration, FractalResult result)
-        => FrameCompleted?.Invoke(frameIndex, duration, result);
-    internal void RaiseFrameFailed(int frameIndex, Exception ex) => FrameFailed?.Invoke(frameIndex, ex);
-
     public async ValueTask DisposeAsync()
     {
         if (!_cts.IsCancellationRequested)
@@ -103,49 +87,5 @@ public sealed class GuiClientNode : IAsyncDisposable
 
         await _client.DisposeAsync();
         _cts.Dispose();
-    }
-
-    private sealed class DisconnectNotifyingHandler(GuiClientNode owner)
-        : IMessageHandler<UnregisteredMessage>
-    {
-        public Task HandleAsync(UnregisteredMessage message)
-        {
-            owner.RaiseDisconnected();
-            return Task.CompletedTask;
-        }
-    }
-
-    private sealed class InstrumentedRenderHandler(
-        GuiClientNode owner,
-        IMessageClient client,
-        IReadOnlyDictionary<FractalGeneratorType, IFractalGenerator<MandelbrotOptions>> generators,
-        IReadOnlyDictionary<FractalColorizerType, IFractalColorizer> colorizers
-    ) : IMessageHandler<RenderFractalMessage>
-    {
-        public async Task HandleAsync(RenderFractalMessage message)
-        {
-            try
-            {
-                if (!generators.TryGetValue(message.GeneratorType, out var generator))
-                    throw new InvalidOperationException($"No generator registered for {message.GeneratorType}.");
-                if (!colorizers.TryGetValue(message.ColorizerType, out var colorizer))
-                    throw new InvalidOperationException($"No colorizer registered for {message.ColorizerType}.");
-                if (message.Options is not MandelbrotOptions options)
-                    throw new InvalidOperationException($"Expected MandelbrotOptions, got {message.Options.GetType().Name}.");
-
-                owner.RaiseFrameStarted(message.FrameIndex);
-
-                var sw = Stopwatch.StartNew();
-                FractalResult result = await Task.Run(() => generator.Generate(options, colorizer));
-                sw.Stop();
-
-                await client.SendToServerAsync(new RenderResultMessage(client.Identifier, message.FrameIndex, result));
-                owner.RaiseFrameCompleted(message.FrameIndex, sw.Elapsed, result);
-            }
-            catch (Exception ex)
-            {
-                owner.RaiseFrameFailed(message.FrameIndex, ex);
-            }
-        }
     }
 }
