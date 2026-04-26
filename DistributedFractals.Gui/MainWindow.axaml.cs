@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using DistributedFractals.Fractal.Mandelbrot;
 using DistributedFractals.Fractal.Zoom;
@@ -76,8 +77,7 @@ public partial class MainWindow : Window
             _clientNode.FrameStarted  += idx => Dispatcher.UIThread.Post(() => view.OnFrameStarted(idx));
             _clientNode.FrameCompleted += (idx, dur, result) => Dispatcher.UIThread.Post(() =>
             {
-                // WriteableBitmap must be created on the UI thread.
-                var bmp = FractalResultBitmap.From(result);
+                WriteableBitmap? bmp = view.ShowPreview ? FractalResultBitmap.From(result) : null;
                 view.OnFrameCompleted(idx, dur, bmp);
             });
             _clientNode.FrameFailed   += (idx, _) => Dispatcher.UIThread.Post(() => view.OnFrameFailed(idx));

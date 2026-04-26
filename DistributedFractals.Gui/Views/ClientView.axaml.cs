@@ -28,6 +28,17 @@ public partial class ClientView : UserControl
         SetConnected(false);
     }
 
+    public bool ShowPreview => PreviewToggle.IsChecked == true;
+
+    private void OnPreviewToggleChanged(object? sender, RoutedEventArgs e)
+    {
+        if (PreviewToggle.IsChecked == false)
+        {
+            FramePreview.Source       = null;
+            PlaceholderText.IsVisible = true;
+        }
+    }
+
     // ── Public API ────────────────────────────────────────────────────────────────
 
     public void OnConnected()
