@@ -77,6 +77,16 @@
                              Foreground="{StaticResource AppTextBrush}" />
                 </StackPanel>
 
+                <!-- Listen address (server only) -->
+                <StackPanel x:Name="ListenAddressRow" Spacing="8">
+                    <TextBlock Text="LISTEN ADDRESS"
+                               FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
+                               Foreground="{StaticResource AppTextMutedBrush}" />
+                    <TextBox x:Name="ListenAddressInput"
+                             Text="127.0.0.1"
+                             Foreground="{StaticResource AppTextBrush}" />
+                </StackPanel>
+
                 <!-- Port -->
                 <StackPanel Spacing="8">
                     <TextBlock Text="PORT"

@@ -40,7 +40,8 @@ public partial class MainWindow : Window
             SetSidebarVisible(true);
             ContentArea.Content = new MainView(isServerMode);
 
-            _serverNode = new GuiServerNode(IPAddress.Any, port, TimeSpan.FromSeconds(timeoutOrHeartbeatSeconds));
+            IPAddress.TryParse(address, out IPAddress? listenAddress);
+            _serverNode = new GuiServerNode(listenAddress ?? IPAddress.Loopback, port, TimeSpan.FromSeconds(timeoutOrHeartbeatSeconds));
             _serverNode.ClientRegistered += client => Dispatcher.UIThread.Post(() =>
             {
                 string name = _serverNode?.GetDisplayName(client) ?? string.Empty;
@@ -54,7 +55,7 @@ public partial class MainWindow : Window
                 Log($"Client {client.Id} left");
             });
 
-            Log($"Starting server on 0.0.0.0:{port} (timeout {timeoutOrHeartbeatSeconds}s)...");
+            Log($"Starting server on {address}:{port} (timeout {timeoutOrHeartbeatSeconds}s)...");
             _ = StartServerAsync();
         }
         else

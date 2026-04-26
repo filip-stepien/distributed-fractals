@@ -16,10 +16,11 @@ public partial class ConnectView : UserControl
     private void OnServerModeClick(object? sender, RoutedEventArgs e)
     {
         _isServerMode = true;
-        AddressRow.IsVisible      = false;
-        DisplayNameRow.IsVisible  = false;
-        TimeoutRow.IsVisible      = true;
-        HeartbeatRow.IsVisible    = false;
+        ListenAddressRow.IsVisible = true;
+        AddressRow.IsVisible       = false;
+        DisplayNameRow.IsVisible   = false;
+        TimeoutRow.IsVisible       = true;
+        HeartbeatRow.IsVisible     = false;
         ServerModeButton.Classes.Set("accent", true);
         ServerModeButton.Classes.Set("muted",  false);
         ClientModeButton.Classes.Set("accent", false);
@@ -29,10 +30,11 @@ public partial class ConnectView : UserControl
     private void OnClientModeClick(object? sender, RoutedEventArgs e)
     {
         _isServerMode = false;
-        AddressRow.IsVisible     = true;
-        DisplayNameRow.IsVisible = true;
-        TimeoutRow.IsVisible     = false;
-        HeartbeatRow.IsVisible   = true;
+        ListenAddressRow.IsVisible = false;
+        AddressRow.IsVisible       = true;
+        DisplayNameRow.IsVisible   = true;
+        TimeoutRow.IsVisible       = false;
+        HeartbeatRow.IsVisible     = true;
         ServerModeButton.Classes.Set("accent", false);
         ServerModeButton.Classes.Set("muted",  true);
         ClientModeButton.Classes.Set("accent", true);
@@ -58,8 +60,14 @@ public partial class ConnectView : UserControl
 
         if (_isServerMode)
         {
+            string listenText = ListenAddressInput.Text?.Trim() ?? string.Empty;
+            if (!System.Net.IPAddress.TryParse(listenText, out var _))
+            {
+                window.Log($"Invalid listen address: '{listenText}'.");
+                return;
+            }
             int timeoutSec = (int)(TimeoutInput.Value ?? 30m);
-            window.NavigateToMain(isServerMode: true, address: string.Empty, port: port, timeoutOrHeartbeatSeconds: timeoutSec, displayName: string.Empty);
+            window.NavigateToMain(isServerMode: true, address: listenText, port: port, timeoutOrHeartbeatSeconds: timeoutSec, displayName: string.Empty);
         }
         else
         {
