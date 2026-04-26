@@ -211,7 +211,8 @@ public partial class MainWindow : Window
         job.ClientFailed    += client => Dispatcher.UIThread.Post(() => view.OnClientDisconnected(client.Id.ToString()));
         job.FrameDispatched += (client, idx) => Dispatcher.UIThread.Post(() => view.OnFrameDispatched(client.Id.ToString(), idx));
         job.FrameCompleted  += (client, idx, dur) => Dispatcher.UIThread.Post(() => view.OnFrameCompleted(client.Id.ToString(), idx, dur));
-        job.Completed       += path => Dispatcher.UIThread.Post(() => Log($"Render complete. GIF saved: {path}"));
+        job.TimingReportReady += report => Dispatcher.UIThread.Post(() => Log(report));
+        job.Completed         += path => Dispatcher.UIThread.Post(() => Log($"Render complete. GIF saved: {path}"));
         job.Failed          += ex => Dispatcher.UIThread.Post(() => Log($"Render failed: {ex.Message}"));
 
         Log($"Starting render: {config.TotalFrames} frames @ {config.FrameRate} fps → {config.OutputPath}");

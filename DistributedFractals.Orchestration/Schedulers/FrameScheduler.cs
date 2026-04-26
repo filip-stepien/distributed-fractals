@@ -1,3 +1,5 @@
+using System.Linq;
+using System.Text;
 using DistributedFractals.Fractal.Core;
 using DistributedFractals.Logging;
 using DistributedFractals.Orchestration.Selectors;
@@ -16,6 +18,7 @@ public sealed class FrameScheduler : IFrameScheduler
     private readonly Queue<RenderFrameMessage> _pending;
     private readonly Dictionary<ClientIdentifier, List<(RenderFrameMessage msg, DateTime dispatchedAt)>> _inFlight = new();
     private readonly SortedDictionary<int, FractalResult> _completed = new();
+    private readonly List<FrameTiming> _timings = new();
     private readonly object _lock = new();
     private readonly TaskCompletionSource _allDone = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -52,6 +55,56 @@ public sealed class FrameScheduler : IFrameScheduler
         }
     }
 
+    public string GetTimingReport()
+    {
+        lock (_lock)
+        {
+            if (_timings.Count == 0)
+                return "No timing data available.";
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("=== Render Timing Report ===");
+
+            IEnumerable<IGrouping<string, FrameTiming>> byClient = _timings
+                .OrderBy(t => t.FrameIndex)
+                .GroupBy(t => t.Client.DisplayName ?? t.Client.Id.ToString());
+
+            int clientCount = byClient.Count();
+            sb.AppendLine($"Frames: {_timings.Count}  |  Clients: {clientCount}");
+            sb.AppendLine();
+            sb.AppendLine($"{"Frame",-6}  {"Client",-16}  {"Roundtrip",10}  {"Render",10}  {"Comm",10}");
+            sb.AppendLine($"{"------",-6}  {"----------------",-16}  {"----------",10}  {"----------",10}  {"----------",10}");
+
+            foreach (FrameTiming t in _timings.OrderBy(t => t.FrameIndex))
+            {
+                string clientLabel = t.Client.DisplayName ?? t.Client.Id.ToString();
+                sb.AppendLine($"{t.FrameIndex,-6}  {clientLabel,-16}  {t.Roundtrip.TotalSeconds,9:F3}s  {t.RenderDuration.TotalSeconds,9:F3}s  {t.CommunicationOverhead.TotalSeconds,9:F3}s");
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("--- Summary ---");
+            double avgRoundtrip = _timings.Average(t => t.Roundtrip.TotalSeconds);
+            double avgRender    = _timings.Average(t => t.RenderDuration.TotalSeconds);
+            double avgComm      = _timings.Average(t => t.CommunicationOverhead.TotalSeconds);
+            sb.AppendLine($"  Avg roundtrip:       {avgRoundtrip:F3}s");
+            sb.AppendLine($"  Avg render:          {avgRender:F3}s");
+            sb.AppendLine($"  Avg comm overhead:   {avgComm:F3}s");
+
+            sb.AppendLine();
+            sb.AppendLine("--- Per client ---");
+            foreach (IGrouping<string, FrameTiming> group in byClient)
+            {
+                int frames       = group.Count();
+                double avgRt     = group.Average(t => t.Roundtrip.TotalSeconds);
+                double avgRnd    = group.Average(t => t.RenderDuration.TotalSeconds);
+                double avgCm     = group.Average(t => t.CommunicationOverhead.TotalSeconds);
+                sb.AppendLine($"  {group.Key,-16}  {frames} frame(s)  avg roundtrip {avgRt:F3}s  avg render {avgRnd:F3}s  avg comm {avgCm:F3}s");
+            }
+
+            return sb.ToString().TrimEnd();
+        }
+    }
+
     public void Cancel()
     {
         lock (_lock)
@@ -70,7 +123,7 @@ public sealed class FrameScheduler : IFrameScheduler
         }
     }
 
-    public void OnResultReceived(Guid clientId, int frameIndex, FractalResult result)
+    public void OnResultReceived(Guid clientId, int frameIndex, FractalResult result, TimeSpan renderDuration)
     {
         lock (_lock)
         {
@@ -86,11 +139,12 @@ public sealed class FrameScheduler : IFrameScheduler
             dispatchedAt = match.dispatchedAt;
             frames.RemoveAll(f => f.msg.FrameIndex == frameIndex);
 
-            TimeSpan duration = dispatchedAt != default ? DateTime.UtcNow - dispatchedAt : TimeSpan.Zero;
+            TimeSpan roundtrip = dispatchedAt != default ? DateTime.UtcNow - dispatchedAt : TimeSpan.Zero;
+            _timings.Add(new FrameTiming(client, frameIndex, roundtrip, renderDuration));
 
             _completed[frameIndex] = result;
             Logger.Log($"Frame {frameIndex} received from client {client.DisplayName} ({_completed.Count}/{_totalFrames}).");
-            FrameCompleted?.Invoke(client, frameIndex, duration);
+            FrameCompleted?.Invoke(client, frameIndex, roundtrip);
 
             if (_completed.Count == _totalFrames)
             {

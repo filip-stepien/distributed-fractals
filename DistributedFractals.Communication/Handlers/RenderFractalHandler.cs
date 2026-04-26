@@ -24,7 +24,7 @@ public class RenderFractalHandler(
             TimeSpan duration = DateTime.UtcNow - start;
             Logger.Log($"Frame {message.FrameIndex} rendered ({result.Width}x{result.Height}). Sending result...");
 
-            await client.SendToServerAsync(new RenderResultMessage(client.Identifier, message.FrameIndex, result));
+            await client.SendToServerAsync(new RenderResultMessage(client.Identifier, message.FrameIndex, result, duration));
             onCompleted?.Invoke(message.FrameIndex, duration, result);
         }
         catch (Exception)

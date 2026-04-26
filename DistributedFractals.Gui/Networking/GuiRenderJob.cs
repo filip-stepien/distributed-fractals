@@ -32,6 +32,7 @@ public sealed class GuiRenderJob : IFrameResultReceiver
     public event Action<ClientIdentifier, int, TimeSpan>? FrameCompleted;
     public event Action<ClientIdentifier>? ClientFailed;
     public event Action<string>? Completed;
+    public event Action<string>? TimingReportReady;
     public event Action<Exception>? Failed;
 
     public GuiRenderJob(
@@ -74,6 +75,8 @@ public sealed class GuiRenderJob : IFrameResultReceiver
         {
             await _scheduler.WaitForAllAsync();
 
+            TimingReportReady?.Invoke(_scheduler.GetTimingReport());
+
             var writer = new GifVideoWriter(_outputPath, _frameRate, repeat: true);
             foreach (FractalResult frame in _scheduler.GetOrderedResults())
                 await writer.WriteFrameAsync(frame);
@@ -113,8 +116,8 @@ public sealed class GuiRenderJob : IFrameResultReceiver
         ClientFailed?.Invoke(client);
     }
 
-    void IFrameResultReceiver.OnResultReceived(Guid clientId, int frameIndex, FractalResult result)
+    void IFrameResultReceiver.OnResultReceived(Guid clientId, int frameIndex, FractalResult result, TimeSpan renderDuration)
     {
-        _scheduler.OnResultReceived(clientId, frameIndex, result);
+        _scheduler.OnResultReceived(clientId, frameIndex, result, renderDuration);
     }
 }

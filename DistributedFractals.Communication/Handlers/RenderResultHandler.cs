@@ -7,7 +7,7 @@ public class RenderResultHandler(IFrameResultReceiver receiver) : IMessageHandle
 {
     public Task HandleAsync(RenderResultMessage message)
     {
-        receiver.OnResultReceived(message.Sender, message.FrameIndex, message.Result);
+        receiver.OnResultReceived(message.Sender, message.FrameIndex, message.Result, message.RenderDuration);
         return Task.CompletedTask;
     }
 }

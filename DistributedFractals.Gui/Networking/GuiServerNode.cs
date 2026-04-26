@@ -74,7 +74,7 @@ public sealed class GuiServerNode : IAsyncDisposable
     {
         public Task HandleAsync(RenderResultMessage message)
         {
-            owner._currentRenderReceiver?.OnResultReceived(message.Sender, message.FrameIndex, message.Result);
+            owner._currentRenderReceiver?.OnResultReceived(message.Sender, message.FrameIndex, message.Result, message.RenderDuration);
             return Task.CompletedTask;
         }
     }
