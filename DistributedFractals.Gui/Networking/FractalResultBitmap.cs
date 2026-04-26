@@ -25,18 +25,19 @@ internal static class FractalResultBitmap
         using var fb = bitmap.Lock();
         unsafe
         {
-            byte* ptr = (byte*)fb.Address;
+            byte* dst = (byte*)fb.Address;
             int stride = fb.RowBytes;
-            foreach (FractalPoint p in result.FractalPoints)
+            for (int y = 0; y < height; y++)
             {
-                int x = (int)p.Coordinates.X;
-                int y = (int)p.Coordinates.Y;
-                if ((uint)x >= (uint)width || (uint)y >= (uint)height) continue;
-                int off = y * stride + x * 4;
-                ptr[off + 0] = (byte)(p.Color.Z * 255); // B
-                ptr[off + 1] = (byte)(p.Color.Y * 255); // G
-                ptr[off + 2] = (byte)(p.Color.X * 255); // R
-                ptr[off + 3] = 255;                      // A
+                for (int x = 0; x < width; x++)
+                {
+                    int src = (y * width + x) * 3;
+                    int off = y * stride + x * 4;
+                    dst[off + 0] = result.Pixels[src + 2]; // B
+                    dst[off + 1] = result.Pixels[src + 1]; // G
+                    dst[off + 2] = result.Pixels[src + 0]; // R
+                    dst[off + 3] = 255;                     // A
+                }
             }
         }
 

@@ -40,12 +40,14 @@ public sealed class GifVideoWriter(string outputPath, int frameRate, bool repeat
 
     private static void FillFrame(ImageFrame<Rgba32> imageFrame, FractalResult frame)
     {
-        foreach (FractalPoint point in frame.FractalPoints)
+        int width = (int)frame.Width;
+        for (int y = 0; y < (int)frame.Height; y++)
         {
-            imageFrame[(int)point.Coordinates.X, (int)point.Coordinates.Y] = new Rgba32(
-                (byte)(point.Color.X * 255),
-                (byte)(point.Color.Y * 255),
-                (byte)(point.Color.Z * 255));
+            for (int x = 0; x < width; x++)
+            {
+                int offset = (y * width + x) * 3;
+                imageFrame[x, y] = new Rgba32(frame.Pixels[offset], frame.Pixels[offset + 1], frame.Pixels[offset + 2]);
+            }
         }
     }
 

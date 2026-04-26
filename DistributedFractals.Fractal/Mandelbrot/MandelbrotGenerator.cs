@@ -19,11 +19,11 @@ public class MandelbrotGenerator : FractalGeneratorBase<MandelbrotOptions>
         double minIm = bounds.MinIm;
         double maxIm = bounds.MaxIm;
 
-        FractalPoint[] resultingPoints = new FractalPoint[width * height];
+        byte[] pixels = new byte[width * height * 3];
 
-        Parallel.For(0, (long)width, pixelX =>
+        Parallel.For(0, (long)height, pixelY =>
         {
-            for (ulong pixelY = 0; pixelY < height; pixelY++)
+            for (ulong pixelX = 0; pixelX < width; pixelX++)
             {
                 double normalizedPixelX = pixelX / (double)(width - 1);
                 double normalizedPixelY = pixelY / (double)(height - 1);
@@ -40,13 +40,14 @@ public class MandelbrotGenerator : FractalGeneratorBase<MandelbrotOptions>
                     iteration++;
                 }
 
-                resultingPoints[pixelX * (long)height + (long)pixelY] = new FractalPoint(
-                    Coordinates: new Vector2(pixelX, pixelY),
-                    Color: colorizer.GetColor(iteration, maxIterations)
-                );
+                Vector3 color = colorizer.GetColor(iteration, maxIterations);
+                long offset = (pixelY * (long)width + (long)pixelX) * 3;
+                pixels[offset]     = (byte)(color.X * 255);
+                pixels[offset + 1] = (byte)(color.Y * 255);
+                pixels[offset + 2] = (byte)(color.Z * 255);
             }
         });
 
-        return new FractalResult(width, height, resultingPoints);
+        return new FractalResult(width, height, pixels);
     }
 }

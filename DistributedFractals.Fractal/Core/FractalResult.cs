@@ -1,3 +1,4 @@
 namespace DistributedFractals.Fractal.Core;
 
-public record FractalResult(ulong Width, ulong Height, ICollection<FractalPoint> FractalPoints);
+// Pixels: row-major RGB, 3 bytes per pixel, index = (y * Width + x) * 3
+public record FractalResult(ulong Width, ulong Height, byte[] Pixels);
