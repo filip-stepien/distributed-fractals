@@ -4,8 +4,6 @@
              Background="{StaticResource AppSurfaceBrush}">
 
     <Grid RowDefinitions="48,*" MinWidth="140">
-
-        <!-- Header — 48px matches main top bar -->
         <Border Grid.Row="0"
                 BorderBrush="{StaticResource AppBorderBrush}"
                 BorderThickness="0,0,0,1">
@@ -28,8 +26,6 @@
                 </Border>
             </Grid>
         </Border>
-
-        <!-- Client list -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel x:Name="ClientList">
                 <TextBlock x:Name="EmptyText"

@@ -47,7 +47,7 @@ await server.StartRenderAsync(new RenderSettings(
     TotalFrames:    120,
     Fps:            30,
     Interpolation:  ZoomInterpolationType.SmoothStep,
-    FramesPerClient: 1,
+    FramesPerBatch: 1,
     ClientSelector: ClientSelectorType.RoundRobin,
     OutputFormat:   VideoFormat.Gif,
     OutputPath:     "output.gif"

@@ -3,7 +3,6 @@
              x:Class="DistributedFractals.Gui.Views.ConnectView"
              Background="{StaticResource AppBgBrush}">
     <Grid>
-        <!-- Centered connection card -->
         <Border Width="420"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
@@ -13,8 +12,6 @@
                 CornerRadius="12"
                 Padding="40,36">
             <StackPanel Spacing="28">
-
-                <!-- Header -->
                 <StackPanel HorizontalAlignment="Center">
                     <TextBlock Text="DISTRIBUTED FRACTALS"
                                FontSize="10" FontWeight="SemiBold"
@@ -27,14 +24,12 @@
                                Foreground="{StaticResource AppTextBrush}"
                                HorizontalAlignment="Center"
                                Margin="0,0,0,14" />
-                    <TextBlock Text="Choose whether to host a render session&#x0a;or join one as a worker."
+                    <TextBlock Text="Choose whether to host a render session or join one as a worker."
                                FontSize="13"
                                Foreground="{StaticResource AppTextMutedBrush}"
                                TextWrapping="Wrap"
                                TextAlignment="Center" />
                 </StackPanel>
-
-                <!-- Mode toggle -->
                 <StackPanel Spacing="8">
                     <TextBlock Text="MODE"
                                FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
@@ -56,8 +51,6 @@
                                 Click="OnClientModeClick" />
                     </Grid>
                 </StackPanel>
-
-                <!-- Display name (client only) -->
                 <StackPanel x:Name="DisplayNameRow" Spacing="8" IsVisible="False">
                     <TextBlock Text="DISPLAY NAME"
                                FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
@@ -66,8 +59,6 @@
                              Watermark="e.g. laptop-01"
                              Foreground="{StaticResource AppTextBrush}" />
                 </StackPanel>
-
-                <!-- Address (client only) -->
                 <StackPanel x:Name="AddressRow" Spacing="8" IsVisible="False">
                     <TextBlock Text="SERVER ADDRESS"
                                FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
@@ -76,8 +67,6 @@
                              Text="127.0.0.1"
                              Foreground="{StaticResource AppTextBrush}" />
                 </StackPanel>
-
-                <!-- Listen address (server only) -->
                 <StackPanel x:Name="ListenAddressRow" Spacing="8">
                     <TextBlock Text="LISTEN ADDRESS"
                                FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
@@ -86,8 +75,6 @@
                              Text="127.0.0.1"
                              Foreground="{StaticResource AppTextBrush}" />
                 </StackPanel>
-
-                <!-- Port -->
                 <StackPanel Spacing="8">
                     <TextBlock Text="PORT"
                                FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
@@ -96,8 +83,6 @@
                              Text="3000"
                              Foreground="{StaticResource AppTextBrush}" />
                 </StackPanel>
-
-                <!-- Advanced options (collapsible) -->
                 <StackPanel Spacing="0">
                     <Button Classes="collapse"
                             HorizontalAlignment="Stretch"
@@ -105,7 +90,7 @@
                             Click="OnAdvancedToggleClick">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <TextBlock x:Name="AdvancedArrow"
-                                       Text="▶"
+                                       Text=">"
                                        FontSize="10"
                                        Foreground="{StaticResource AppTextMutedBrush}"
                                        VerticalAlignment="Center" />
@@ -117,8 +102,6 @@
                     </Button>
 
                     <StackPanel x:Name="AdvancedPanel" IsVisible="False" Spacing="20" Margin="0,16,0,0">
-
-                        <!-- Protocol -->
                         <StackPanel Spacing="8">
                             <TextBlock Text="PROTOCOL"
                                        FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
@@ -130,8 +113,6 @@
                                 <ComboBoxItem Content="UDP" />
                             </ComboBox>
                         </StackPanel>
-
-                        <!-- Timeout (server only) -->
                         <StackPanel x:Name="TimeoutRow" Spacing="8">
                             <TextBlock Text="CLIENT TIMEOUT (s)"
                                        FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
@@ -141,8 +122,6 @@
                                            FormatString="0"
                                            Foreground="{StaticResource AppTextBrush}" />
                         </StackPanel>
-
-                        <!-- Heartbeat interval (client only) -->
                         <StackPanel x:Name="HeartbeatRow" Spacing="8" IsVisible="False">
                             <TextBlock Text="HEARTBEAT INTERVAL (s)"
                                        FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
@@ -155,8 +134,6 @@
 
                     </StackPanel>
                 </StackPanel>
-
-                <!-- Connect button -->
                 <Button Content="Start"
                         Classes="accent"
                         HorizontalAlignment="Stretch"

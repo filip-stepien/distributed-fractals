@@ -13,13 +13,9 @@
             BorderThickness="1"
             CornerRadius="0">
         <StackPanel Margin="24" Spacing="8">
-
-            <!-- Title -->
             <TextBlock Text="Output Details"
                        FontSize="13" FontWeight="SemiBold"
                        Foreground="{StaticResource AppTextBrush}" />
-
-            <!-- Summary -->
             <Border Background="{StaticResource AppSurfaceBrush}"
                     BorderBrush="{StaticResource AppBorderBrush}"
                     BorderThickness="1"
@@ -52,8 +48,6 @@
                                Margin="0,8,0,0" />
                 </Grid>
             </Border>
-
-            <!-- Save location -->
             <StackPanel Spacing="8">
                 <TextBlock Text="Output File"
                            FontSize="13" FontWeight="SemiBold"
@@ -73,8 +67,6 @@
                             ToolTip.Tip="Choose output file location" />
                 </Grid>
             </StackPanel>
-
-            <!-- Actions -->
             <Grid ColumnDefinitions="*,8,*" Margin="0,4,0,0">
                 <Button Grid.Column="0"
                         Content="Cancel"
@@ -85,7 +77,7 @@
                         Click="OnCancelClick" />
                 <Button x:Name="StartButton"
                         Grid.Column="2"
-                        Content="▶  Start"
+                        Content="Start"
                         Classes="accent"
                         HorizontalAlignment="Stretch"
                         HorizontalContentAlignment="Center"

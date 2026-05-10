@@ -4,16 +4,13 @@
              Background="{StaticResource AppBgBrush}">
 
     <Grid RowDefinitions="48,*">
-
-        <!-- ═══ TOP BAR ════════════════════════════════════════════════════════════ -->
         <Border Grid.Row="0"
                 Background="{StaticResource AppSurfaceBrush}"
                 BorderBrush="{StaticResource AppBorderBrush}"
                 BorderThickness="0,0,0,1">
             <Grid ColumnDefinitions="Auto,*,Auto" Margin="16,0">
-                <!-- Left: back button + title + mode badge -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                    <Button Content="&#x2B9C;"
+                    <Button Content="Back"
                             Classes="icon"
                             FontWeight="Bold"
                             Click="OnBackClick"
@@ -23,16 +20,13 @@
                                VerticalAlignment="Center"
                                Foreground="{StaticResource AppTextBrush}" />
                 </StackPanel>
-                <!-- Right: Start Render -->
                 <Button Grid.Column="2"
-                        Content="▶&#x2004;&#x2004;Start Render"
+                        Content="Start Render"
                         Classes="render"
                         VerticalAlignment="Center"
                         Click="OnRenderClick" />
             </Grid>
         </Border>
-
-        <!-- ═══ MAIN CONTENT ══════════════════════════════════════════════════════ -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="260" />
@@ -41,16 +35,12 @@
                 <ColumnDefinition Width="5" />
                 <ColumnDefinition Width="240" />
             </Grid.ColumnDefinitions>
-
-            <!-- Left settings panel -->
             <Border Grid.Column="0"
                     Background="{StaticResource AppSurfaceBrush}"
                     BorderBrush="{StaticResource AppBorderBrush}"
                     BorderThickness="0,0,1,0">
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="16" Spacing="24">
-
-                        <!-- Section: Fractal -->
                         <StackPanel Spacing="12">
                             <TextBlock Text="FRACTAL"
                                        FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
@@ -101,11 +91,7 @@
                                 </ComboBox>
                             </StackPanel>
                         </StackPanel>
-
-                        <!-- Divider -->
                         <Border Height="1" Background="{StaticResource AppBorderBrush}" />
-
-                        <!-- Section: Animation -->
                         <StackPanel Spacing="12">
                             <TextBlock Text="ANIMATION"
                                        FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
@@ -139,20 +125,16 @@
                             </StackPanel>
 
                         </StackPanel>
-
-                        <!-- Divider -->
                         <Border Height="1" Background="{StaticResource AppBorderBrush}" />
-
-                        <!-- Section: Render -->
                         <StackPanel Spacing="12">
                             <TextBlock Text="RENDER"
                                        FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
                                        Foreground="{StaticResource AppTextMutedBrush}" />
 
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Frames Per Client" FontSize="13"
+                                <TextBlock Text="Frames Per Batch" FontSize="13"
                                            Foreground="{StaticResource AppTextBrush}" />
-                                <NumericUpDown x:Name="FramesPerClientInput"
+                                <NumericUpDown x:Name="FramesPerBatchInput"
                                                Value="1" Minimum="1" Maximum="32"
                                                Increment="1" FormatString="0" />
                             </StackPanel>
@@ -172,18 +154,13 @@
                     </StackPanel>
                 </ScrollViewer>
             </Border>
-
-            <!-- Vertical divider -->
             <GridSplitter Grid.Column="1"
                           ResizeDirection="Columns"
                           Background="{StaticResource AppBorderBrush}"
                           HorizontalAlignment="Stretch"
                           Cursor="SizeWestEast" />
-
-            <!-- Center: Fractal canvas -->
             <Grid Grid.Column="2" Background="{StaticResource AppBgBrush}">
                 <Image x:Name="FractalImage" Stretch="Uniform" />
-                <!-- Render loader overlay -->
                 <Border x:Name="RenderOverlay"
                         IsVisible="False"
                         Background="#99111318">
@@ -205,7 +182,6 @@
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center"
                            IsVisible="True" />
-                <!-- Selection hint banner -->
                 <Border x:Name="SelectionHintBanner"
                         IsVisible="False"
                         VerticalAlignment="Bottom"
@@ -243,15 +219,11 @@
                                Fill="#224A9EFF" />
                 </Canvas>
             </Grid>
-
-            <!-- Vertical divider -->
             <GridSplitter Grid.Column="3"
                           ResizeDirection="Columns"
                           Background="{StaticResource AppBorderBrush}"
                           HorizontalAlignment="Stretch"
                           Cursor="SizeWestEast" />
-
-            <!-- Right: Keyframes panel -->
             <Border Grid.Column="4"
                     Background="{StaticResource AppSurfaceBrush}"
                     BorderBrush="{StaticResource AppBorderBrush}"
@@ -259,8 +231,6 @@
                 <ScrollViewer HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Disabled">
                 <Grid RowDefinitions="Auto,Auto,*">
-
-                    <!-- Tab title + options -->
                     <Border Grid.Row="0"
                             BorderBrush="{StaticResource AppBorderBrush}"
                             BorderThickness="0,0,0,1"
@@ -283,8 +253,6 @@
                             </StackPanel>
                         </StackPanel>
                     </Border>
-
-                    <!-- Manual keyframe entry -->
                     <Border Grid.Row="1"
                             BorderBrush="{StaticResource AppBorderBrush}"
                             BorderThickness="0,0,0,1"
@@ -314,8 +282,6 @@
                                     Click="OnAddManualKeyframeClick" />
                         </StackPanel>
                     </Border>
-
-                    <!-- Keyframes list -->
                     <Grid Grid.Row="2">
                         <TextBlock x:Name="KeyframesEmptyText"
                                    Text="No keyframes added yet."

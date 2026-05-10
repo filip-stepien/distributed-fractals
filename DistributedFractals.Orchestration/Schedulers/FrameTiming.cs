@@ -5,6 +5,16 @@ namespace DistributedFractals.Orchestration.Schedulers;
 public record FrameTiming(
     ClientIdentifier Client,
     int FrameIndex,
+    int BatchId,
+    TimeSpan RenderDuration
+);
+
+public record BatchTiming(
+    ClientIdentifier Client,
+    int BatchId,
+    int FirstFrameIndex,
+    int LastFrameIndex,
+    int FrameCount,
     TimeSpan Roundtrip,
     TimeSpan RenderDuration
 )

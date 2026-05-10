@@ -12,28 +12,29 @@ public partial class RenderDialog : Window
         InitializeComponent();
 
         double seconds = (double)totalFrames / fps;
-        SummaryResolution.Text = $"{width} × {height}";
-        SummaryFrames.Text     = $"{totalFrames} @ {fps} fps";
-        SummaryDuration.Text   = $"{seconds:F1}s";
+        SummaryResolution.Text = $"{width} x {height}";
+        SummaryFrames.Text = $"{totalFrames} @ {fps} fps";
+        SummaryDuration.Text = $"{seconds:F1}s";
     }
 
     private async void OnBrowseClick(object? sender, RoutedEventArgs e)
     {
         var file = await StorageProvider.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
         {
-            Title             = "Choose output location",
+            Title = "Choose output location",
             SuggestedFileName = "render.gif",
-            FileTypeChoices   =
-            [
+            FileTypeChoices = [
                 new Avalonia.Platform.Storage.FilePickerFileType("GIF") { Patterns = ["*.gif"] }
             ]
         });
 
-        if (file is not null)
+        if (file is null)
         {
-            OutputPathInput.Text = file.Path.LocalPath;
-            StartButton.IsEnabled = true;
+            return;
         }
+
+        OutputPathInput.Text = file.Path.LocalPath;
+        StartButton.IsEnabled = true;
     }
 
     private void OnStartClick(object? sender, RoutedEventArgs e)
@@ -42,5 +43,8 @@ public partial class RenderDialog : Window
         Close(true);
     }
 
-    private void OnCancelClick(object? sender, RoutedEventArgs e) => Close(false);
+    private void OnCancelClick(object? sender, RoutedEventArgs e)
+    {
+        Close(false);
+    }
 }

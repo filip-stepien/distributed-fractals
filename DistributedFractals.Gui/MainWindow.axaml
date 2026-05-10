@@ -6,8 +6,6 @@
         MinWidth="900" MinHeight="600"
         Background="{StaticResource AppBgBrush}">
     <Grid x:Name="RootGrid" RowDefinitions="*,0,0">
-
-        <!-- Main area: content + splitter + sidebar -->
         <Grid x:Name="ContentGrid" Grid.Row="0" ColumnDefinitions="*,0,0">
             <ContentControl x:Name="ContentArea" Grid.Column="0" />
             <GridSplitter x:Name="ClientsSplitter"
@@ -28,8 +26,6 @@
                 </ScrollViewer>
             </Border>
         </Grid>
-
-        <!-- Console splitter -->
         <GridSplitter x:Name="ConsoleSplitter"
                       Grid.Row="1"
                       ResizeDirection="Rows"
@@ -37,8 +33,6 @@
                       VerticalAlignment="Stretch"
                       IsVisible="False"
                       Cursor="SizeNorthSouth" />
-
-        <!-- Full-width console -->
         <Border Grid.Row="2"
                 x:Name="ConsoleBorder"
                 Background="{StaticResource AppSurfaceBrush}"
