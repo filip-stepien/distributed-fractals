@@ -1,11 +1,8 @@
 using System;
-using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform;
-using Avalonia.Threading;
 
 namespace DistributedFractals.Gui.Views;
 
@@ -15,11 +12,8 @@ public partial class ClientView : UserControl
     private int _totalFrames;
 
     private static readonly Color AccentColor = Color.FromRgb(0x4A, 0x9E, 0xFF);
-    private static readonly Color GreenColor  = Color.FromRgb(0x22, 0xC5, 0x5E);
-    private static readonly Color RedColor    = Color.FromRgb(0xEF, 0x44, 0x44);
-    private static readonly Color MutedColor  = Color.FromRgb(0x6B, 0x72, 0x80);
-    private static readonly Color TextColor   = Color.FromRgb(0xE2, 0xE8, 0xF0);
-
+    private static readonly Color GreenColor = Color.FromRgb(0x22, 0xC5, 0x5E);
+    private static readonly Color RedColor = Color.FromRgb(0xEF, 0x44, 0x44);
     public ClientView(string serverAddress)
     {
         _serverAddress = serverAddress;
@@ -30,17 +24,6 @@ public partial class ClientView : UserControl
 
     public bool ShowPreview => PreviewToggle.IsChecked == true;
 
-    private void OnPreviewToggleChanged(object? sender, RoutedEventArgs e)
-    {
-        if (PreviewToggle.IsChecked == false)
-        {
-            FramePreview.Source       = null;
-            PlaceholderText.IsVisible = true;
-        }
-    }
-
-    // ── Public API ────────────────────────────────────────────────────────────────
-
     public void OnConnected()
     {
         SetConnected(true);
@@ -50,19 +33,22 @@ public partial class ClientView : UserControl
     public void OnDisconnected()
     {
         SetConnected(false);
-        StatusDot.Fill        = new SolidColorBrush(RedColor);
-        StatusText.Text       = "Disconnected";
+        StatusDot.Fill = new SolidColorBrush(RedColor);
+        StatusText.Text = "Disconnected";
         StatusText.Foreground = new SolidColorBrush(RedColor);
-        CurrentFrameText.Text = "—";
+        CurrentFrameText.Text = "-";
         Log($"Disconnected from {_serverAddress}.");
     }
 
-    public void SetTotalFrames(int total) => _totalFrames = total;
+    public void SetTotalFrames(int total)
+    {
+        _totalFrames = total;
+    }
 
     public void OnFrameStarted(int frameIndex)
     {
-        StatusDot.Fill        = new SolidColorBrush(AccentColor);
-        StatusText.Text       = "Rendering";
+        StatusDot.Fill = new SolidColorBrush(AccentColor);
+        StatusText.Text = "Rendering";
         StatusText.Foreground = new SolidColorBrush(AccentColor);
         CurrentFrameText.Text = _totalFrames > 0
             ? $"Frame {frameIndex} / {_totalFrames}"
@@ -71,37 +57,42 @@ public partial class ClientView : UserControl
 
     public void OnFrameCompleted(int frameIndex, TimeSpan duration, WriteableBitmap? preview = null)
     {
-        CurrentFrameText.Text = "—";
-        StatusDot.Fill        = new SolidColorBrush(GreenColor);
-        StatusText.Text       = "Idle";
+        CurrentFrameText.Text = "-";
+        StatusDot.Fill = new SolidColorBrush(GreenColor);
+        StatusText.Text = "Idle";
         StatusText.Foreground = new SolidColorBrush(GreenColor);
 
         if (preview is not null)
         {
-            FramePreview.Source       = preview;
+            FramePreview.Source = preview;
             PlaceholderText.IsVisible = false;
         }
     }
 
     public void OnFrameFailed(int frameIndex)
     {
-        CurrentFrameText.Text = "—";
-        StatusDot.Fill        = new SolidColorBrush(GreenColor);
-        StatusText.Text       = "Idle";
+        CurrentFrameText.Text = "-";
+        StatusDot.Fill = new SolidColorBrush(GreenColor);
+        StatusText.Text = "Idle";
         StatusText.Foreground = new SolidColorBrush(GreenColor);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────────
+    private void OnPreviewToggleChanged(object? sender, RoutedEventArgs e)
+    {
+        if (PreviewToggle.IsChecked == false)
+        {
+            FramePreview.Source = null;
+            PlaceholderText.IsVisible = true;
+        }
+    }
 
     private void SetConnected(bool connected)
     {
         var brush = new SolidColorBrush(connected ? GreenColor : RedColor);
-        ConnectionDot.Fill        = brush;
+        ConnectionDot.Fill = brush;
         ConnectionLabel.Foreground = brush;
-        ConnectionText.Foreground  = brush;
+        ConnectionText.Foreground = brush;
     }
-
-    // ── Navigation ────────────────────────────────────────────────────────────────
 
     private async void OnBackClick(object? sender, RoutedEventArgs e)
     {
@@ -113,15 +104,25 @@ public partial class ClientView : UserControl
             danger: true,
             windowTitle: "Warning"
         );
-        var result = await dialog.ShowDialog<bool?>(TopLevel.GetTopLevel(this) as Window);
-        if (result is not true) return;
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+        {
+            return;
+        }
+
+        var result = await dialog.ShowDialog<bool?>(owner);
+        if (result is not true)
+        {
+            return;
+        }
 
         if (VisualRoot is MainWindow window)
+        {
             window.NavigateToConnect();
+        }
     }
 
-    // ── Log ───────────────────────────────────────────────────────────────────────
-
-    private void Log(string message) => (VisualRoot as MainWindow)?.Log(message);
-
+    private void Log(string message)
+    {
+        (VisualRoot as MainWindow)?.Log(message);
+    }
 }

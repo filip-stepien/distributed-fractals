@@ -15,7 +15,10 @@ IMessageClient client = new TcpTransportFactory(
 
 MessageDispatcher dispatcher = new();
 dispatcher.Register(new UnregisteredMessageHandler());
-dispatcher.Register(new RenderFractalHandler(client));
+
+RenderFractalHandler renderHandler = new(client);
+dispatcher.Register<RenderFrameMessage>(renderHandler);
+dispatcher.Register<RenderBatchMessage>(renderHandler);
 
 client.MessageReceived += async message =>
 {

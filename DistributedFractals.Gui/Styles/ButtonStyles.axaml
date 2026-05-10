@@ -1,12 +1,8 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-
-    <!-- Suppress Fluent hover tint on Image -->
     <Style Selector="Image">
         <Setter Property="IsHitTestVisible" Value="False" />
     </Style>
-
-    <!-- Pointer cursor on all buttons -->
     <Style Selector="Button">
         <Setter Property="Cursor" Value="Hand" />
     </Style>
@@ -96,8 +92,6 @@
     <Style Selector="Button.icon:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="#22FFFFFF" />
     </Style>
-
-    <!-- Fix vertical text alignment on macOS -->
     <Style Selector="NumericUpDown">
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>

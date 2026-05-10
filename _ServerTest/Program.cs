@@ -44,12 +44,15 @@ List<RenderFrameMessage> frames = frameBounds
         bounds))
     .ToList();
 
-FrameScheduler scheduler = new(master, frames, new RoundRobinClientSelector(), framesPerClient: 1);
+FrameScheduler scheduler = new(master, frames, new RoundRobinClientSelector(), framesPerBatch: 1);
 
 MessageDispatcher dispatcher = new();
 dispatcher.Register(new JoinMessageHandler(master));
 dispatcher.Register(new HeartbeatMessageHandler(master));
-dispatcher.Register(new RenderResultHandler(scheduler));
+
+RenderResultHandler renderResultHandler = new(scheduler);
+dispatcher.Register<RenderResultMessage>(renderResultHandler);
+dispatcher.Register<RenderBatchResultMessage>(renderResultHandler);
 
 master.MessageReceived += async message =>
 {
@@ -72,6 +75,8 @@ await master.StartAsync();
 Logger.Log("Server started. Waiting for workers...");
 
 await scheduler.WaitForAllAsync();
+Logger.Log($"Render wall-clock time: {scheduler.RenderElapsed.TotalSeconds:F3}s");
+Logger.Log(scheduler.GetTimingReport());
 Logger.Log("All frames received. Saving GIF...");
 
 string outputPath = Path.Combine(Path.GetTempPath(), "fractal_zoom.gif");

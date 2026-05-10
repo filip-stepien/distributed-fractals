@@ -7,7 +7,6 @@
         <StyleInclude Source="avares://DistributedFractals.Gui/Styles/ButtonStyles.axaml" />
     </Application.Styles>
     <Application.Resources>
-        <!-- Force blue accent across all platforms (overrides system accent) -->
         <Color x:Key="SystemAccentColor">#4A9EFF</Color>
         <Color x:Key="SystemAccentColorDark1">#3080D0</Color>
         <Color x:Key="SystemAccentColorDark2">#1A60B0</Color>

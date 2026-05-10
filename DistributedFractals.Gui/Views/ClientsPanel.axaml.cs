@@ -8,12 +8,11 @@ namespace DistributedFractals.Gui.Views;
 
 public partial class ClientsPanel : UserControl
 {
-    private static readonly Color GreenColor  = Color.FromRgb(0x22, 0xC5, 0x5E);
-    private static readonly Color RedColor    = Color.FromRgb(0xEF, 0x44, 0x44);
-    private static readonly Color TextColor   = Color.FromRgb(0xE2, 0xE8, 0xF0);
-    private static readonly Color MutedColor  = Color.FromRgb(0x6B, 0x72, 0x80);
+    private static readonly Color GreenColor = Color.FromRgb(0x22, 0xC5, 0x5E);
+    private static readonly Color RedColor = Color.FromRgb(0xEF, 0x44, 0x44);
+    private static readonly Color TextColor = Color.FromRgb(0xE2, 0xE8, 0xF0);
+    private static readonly Color MutedColor = Color.FromRgb(0x6B, 0x72, 0x80);
     private static readonly Color BorderColor = Color.FromRgb(0x2A, 0x2D, 0x35);
-    private static readonly Color SurfaceColor = Color.FromRgb(0x1C, 0x1F, 0x26);
 
     private readonly Dictionary<string, (Border Row, Ellipse Dot)> _rows = new();
     private int _connectedCount;
@@ -23,20 +22,35 @@ public partial class ClientsPanel : UserControl
         InitializeComponent();
     }
 
+    public void Reset()
+    {
+        _rows.Clear();
+        _connectedCount = 0;
+        ClientList.Children.Clear();
+        ClientList.Children.Add(EmptyText);
+        EmptyText.IsVisible = true;
+        UpdateCount();
+    }
+
     public void OnClientConnected(string clientId, string displayName, string address)
     {
+        if (_rows.ContainsKey(clientId))
+        {
+            return;
+        }
+
         EmptyText.IsVisible = false;
 
         var dot = new Ellipse
         {
-            Width = 7, Height = 7,
+            Width = 7,
+            Height = 7,
             Fill = new SolidColorBrush(GreenColor),
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
             Margin = new Avalonia.Thickness(0, 3, 8, 0)
         };
 
         string title = !string.IsNullOrWhiteSpace(displayName) ? displayName : clientId;
-
         var nameText = new TextBlock
         {
             Text = title,
@@ -63,7 +77,11 @@ public partial class ClientsPanel : UserControl
             Margin = new Avalonia.Thickness(15, 2, 0, 0)
         };
 
-        var content = new StackPanel { Orientation = Avalonia.Layout.Orientation.Vertical, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+        var content = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Vertical,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+        };
         content.Children.Add(nameRow);
         content.Children.Add(ipText);
 
@@ -86,7 +104,10 @@ public partial class ClientsPanel : UserControl
 
     public void OnClientDisconnected(string clientId)
     {
-        if (!_rows.TryGetValue(clientId, out var entry)) return;
+        if (!_rows.TryGetValue(clientId, out var entry))
+        {
+            return;
+        }
 
         entry.Dot.Fill = new SolidColorBrush(RedColor);
         entry.Row.Opacity = 0.5;

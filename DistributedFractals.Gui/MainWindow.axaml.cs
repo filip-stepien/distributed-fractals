@@ -1,138 +1,156 @@
 using System;
-using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
-using DistributedFractals.Fractal.Mandelbrot;
-using DistributedFractals.Fractal.Zoom;
-using DistributedFractals.Fractal.Zoom.Interpolations;
-using DistributedFractals.Gui.Networking;
+using DistributedFractals.Gui.Rendering;
+using DistributedFractals.Gui.Services;
 using DistributedFractals.Gui.Views;
+using DistributedFractals.Logging;
+using DistributedFractals.Sessions;
 using DistributedFractals.Server.Core;
-using DistributedFractals.Server.Messages;
 
 namespace DistributedFractals.Gui;
 
 public partial class MainWindow : Window
 {
-    /// <summary>Always-visible clients panel (server mode only). Use to report connect/disconnect events.</summary>
     public readonly ClientsPanel ClientsPanel = new();
 
-    private GuiServerNode? _serverNode;
-    private GuiClientNode? _clientNode;
-    private GuiRenderJob?  _currentJob;
+    private IServerSession? _serverSession;
+    private IClientSession? _clientSession;
+
+    private Action<ClientIdentifier, int>? _renderFrameDispatched;
+    private Action<ClientIdentifier, int, TimeSpan>? _renderFrameCompleted;
+    private Action<ClientIdentifier, int>? _renderFrameFailed;
+    private Action<ClientIdentifier>? _renderClientConnected;
+    private Action<ClientIdentifier>? _renderClientDisconnected;
+    private Action<string>? _renderTimingReportReady;
+    private Action? _renderCompleted;
+    private Action<Exception>? _renderFailed;
 
     public MainWindow()
     {
         InitializeComponent();
+        Logger.Initialize(new GuiLogger(Log));
+
         ClientsSidebarContent.Content = ClientsPanel;
         ContentArea.Content = new ConnectView();
         ConsoleBorder.IsVisible = false;
     }
 
-    public void NavigateToMain(bool isServerMode, string address, int port, int timeoutOrHeartbeatSeconds, string displayName = "")
+    public void NavigateToMain(
+        bool isServerMode,
+        string address,
+        int port,
+        int timeoutOrHeartbeatSeconds,
+        string displayName = "",
+        TransportProtocol protocol = TransportProtocol.Tcp)
+    {
+        SetConsoleVisible(true);
+
+        if (isServerMode)
+        {
+            StartServerView(address, port, timeoutOrHeartbeatSeconds, protocol);
+            return;
+        }
+
+        StartClientView(address, port, timeoutOrHeartbeatSeconds, displayName, protocol);
+    }
+
+    public async void NavigateToConnect()
+    {
+        CancelRender();
+        SetSidebarVisible(false);
+        SetConsoleVisible(false);
+
+        if (_serverSession is not null)
+        {
+            try
+            {
+                await _serverSession.DisposeAsync();
+            }
+            catch
+            {
+            }
+
+            _serverSession = null;
+        }
+
+        if (_clientSession is not null)
+        {
+            try
+            {
+                await _clientSession.DisposeAsync();
+            }
+            catch
+            {
+            }
+
+            _clientSession = null;
+        }
+
+        ClientsPanel.Reset();
+        ContentArea.Content = new ConnectView();
+    }
+
+    public void NavigateToMain(bool isServerMode)
     {
         SetConsoleVisible(true);
 
         if (isServerMode)
         {
             SetSidebarVisible(true);
-            ContentArea.Content = new MainView(isServerMode);
-
-            IPAddress.TryParse(address, out IPAddress? listenAddress);
-            _serverNode = new GuiServerNode(listenAddress ?? IPAddress.Loopback, port, TimeSpan.FromSeconds(timeoutOrHeartbeatSeconds));
-            _serverNode.ClientRegistered += client => Dispatcher.UIThread.Post(() =>
-            {
-                string name = _serverNode?.GetDisplayName(client) ?? string.Empty;
-                string addr = _serverNode?.Server.GetClientAddress(client.Id) ?? "unknown";
-                ClientsPanel.OnClientConnected(client.Id.ToString(), name, addr);
-                Log($"Client {(string.IsNullOrWhiteSpace(name) ? client.Id.ToString() : name)} joined from {addr}");
-            });
-            _serverNode.ClientUnregistered += client => Dispatcher.UIThread.Post(() =>
-            {
-                ClientsPanel.OnClientDisconnected(client.Id.ToString());
-                Log($"Client {client.Id} left");
-            });
-
-            Log($"Starting server on {address}:{port} (timeout {timeoutOrHeartbeatSeconds}s)...");
-            _ = StartServerAsync();
+            ContentArea.Content = new MainView(isServerMode: true);
+            return;
         }
-        else
-        {
-            SetSidebarVisible(false);
-            var view = new ClientView(address);
-            ContentArea.Content = view;
 
-            if (!IPAddress.TryParse(address, out var ip))
-            {
-                Log($"Invalid server address: '{address}'.");
-                return;
-            }
-
-            _clientNode = new GuiClientNode(ip, port, TimeSpan.FromSeconds(timeoutOrHeartbeatSeconds), displayName);
-            _clientNode.Connected     += () => Dispatcher.UIThread.Post(view.OnConnected);
-            _clientNode.Disconnected  += () => Dispatcher.UIThread.Post(view.OnDisconnected);
-            _clientNode.FrameStarted  += idx => Dispatcher.UIThread.Post(() => view.OnFrameStarted(idx));
-            _clientNode.FrameCompleted += (idx, dur, result) => Dispatcher.UIThread.Post(() =>
-            {
-                WriteableBitmap? bmp = view.ShowPreview ? FractalResultBitmap.From(result) : null;
-                view.OnFrameCompleted(idx, dur, bmp);
-            });
-            _clientNode.FrameFailed   += (idx, _) => Dispatcher.UIThread.Post(() => view.OnFrameFailed(idx));
-
-            Log($"Connecting to {address}:{port} (heartbeat {timeoutOrHeartbeatSeconds}s)...");
-            _ = StartClientAsync();
-        }
-    }
-
-    private async Task StartServerAsync()
-    {
-        try
-        {
-            await _serverNode!.StartAsync();
-            Dispatcher.UIThread.Post(() => Log("Server started. Waiting for clients..."));
-        }
-        catch (Exception ex)
-        {
-            Dispatcher.UIThread.Post(() => Log($"Server failed to start: {ex.Message}"));
-        }
-    }
-
-    private async Task StartClientAsync()
-    {
-        try
-        {
-            await _clientNode!.StartAsync();
-        }
-        catch (Exception ex)
-        {
-            Dispatcher.UIThread.Post(() => Log($"Connection failed: {ex.Message}"));
-        }
-    }
-
-    public async void NavigateToConnect()
-    {
         SetSidebarVisible(false);
-        SetConsoleVisible(false);
+        ContentArea.Content = new ClientView(string.Empty);
+    }
 
-        if (_serverNode is not null)
+    public RenderView NavigateToRender(bool isServerMode, RenderSettings settings)
+    {
+        var view = new RenderView(isServerMode, settings.TotalFrames);
+        SetConsoleVisible(true);
+        ContentArea.Content = view;
+
+        if (_serverSession is null)
         {
-            try { await _serverNode.DisposeAsync(); } catch { }
-            _serverNode = null;
-        }
-        if (_clientNode is not null)
-        {
-            try { await _clientNode.DisposeAsync(); } catch { }
-            _clientNode = null;
+            const string message = "Cannot render: server is not running.";
+            Log(message);
+            view.OnRenderFailed(message);
+            return view;
         }
 
-        ContentArea.Content = new ConnectView();
+        foreach (ClientIdentifier client in _serverSession.Clients)
+        {
+            view.OnClientConnected(
+                client.Id.ToString(),
+                client.DisplayName,
+                _serverSession.GetClientAddress(client) ?? "unknown");
+        }
+
+        BindRenderView(view, settings);
+        Log($"Starting render: {settings.TotalFrames} frames @ {settings.Fps} fps, {settings.FramesPerBatch} frame(s)/batch -> {settings.OutputPath}");
+        _ = StartRenderAsync(_serverSession, settings, view);
+
+        return view;
+    }
+
+    public void CancelRender()
+    {
+        _serverSession?.CancelRender();
+        ClearRenderBindings();
     }
 
     public void Log(string message)
     {
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(() => Log(message));
+            return;
+        }
+
         string line = $"[{DateTime.Now:HH:mm:ss}] {message}";
         LogTextBox.Text = string.IsNullOrEmpty(LogTextBox.Text)
             ? line
@@ -140,9 +158,233 @@ public partial class MainWindow : Window
         LogTextBox.CaretIndex = LogTextBox.Text.Length;
     }
 
+    private void StartServerView(string address, int port, int timeoutSeconds, TransportProtocol protocol)
+    {
+        SetSidebarVisible(true);
+        ClientsPanel.Reset();
+        ContentArea.Content = new MainView(isServerMode: true);
+
+        _serverSession = new ServerSession();
+        _serverSession.ClientConnected += OnServerClientConnected;
+        _serverSession.ClientDisconnected += OnServerClientDisconnected;
+
+        var settings = new ServerConnectionSettings(
+            address,
+            port,
+            protocol,
+            TimeSpan.FromSeconds(timeoutSeconds));
+
+        Log($"Starting server on {address}:{port} ({protocol}, timeout {timeoutSeconds}s)...");
+        _ = StartServerAsync(_serverSession, settings);
+    }
+
+    private void StartClientView(
+        string address,
+        int port,
+        int heartbeatSeconds,
+        string displayName,
+        TransportProtocol protocol)
+    {
+        SetSidebarVisible(false);
+
+        var view = new ClientView($"{address}:{port}");
+        ContentArea.Content = view;
+
+        _clientSession = new ClientSession();
+        _clientSession.Connected += () => Dispatcher.UIThread.Post(view.OnConnected);
+        _clientSession.Disconnected += () => Dispatcher.UIThread.Post(view.OnDisconnected);
+        _clientSession.FrameStarted += frameIndex =>
+            Dispatcher.UIThread.Post(() => view.OnFrameStarted(frameIndex));
+        _clientSession.FrameCompleted += (frameIndex, duration, result) =>
+            Dispatcher.UIThread.Post(() =>
+            {
+                WriteableBitmap? preview = view.ShowPreview ? FractalResultBitmap.From(result) : null;
+                view.OnFrameCompleted(frameIndex, duration, preview);
+            });
+        _clientSession.FrameFailed += frameIndex =>
+            Dispatcher.UIThread.Post(() => view.OnFrameFailed(frameIndex));
+
+        var settings = new ClientConnectionSettings(
+            address,
+            port,
+            protocol,
+            TimeSpan.FromSeconds(heartbeatSeconds));
+
+        Log($"Connecting to {address}:{port} ({protocol}, heartbeat {heartbeatSeconds}s)...");
+        _ = StartClientAsync(_clientSession, displayName, settings);
+    }
+
+    private async Task StartServerAsync(IServerSession session, ServerConnectionSettings settings)
+    {
+        try
+        {
+            await session.StartAsync(settings);
+            Log("Server started. Waiting for clients...");
+        }
+        catch (Exception ex)
+        {
+            Log($"Server failed to start: {ex.Message}");
+        }
+    }
+
+    private async Task StartClientAsync(IClientSession session, string displayName, ClientConnectionSettings settings)
+    {
+        try
+        {
+            await session.ConnectAsync(displayName, settings);
+        }
+        catch (Exception ex)
+        {
+            Log($"Connection failed: {ex.Message}");
+        }
+    }
+
+    private async Task StartRenderAsync(IServerSession session, RenderSettings settings, RenderView view)
+    {
+        try
+        {
+            await session.StartRenderAsync(settings);
+        }
+        catch (Exception ex)
+        {
+            Log($"Render failed to start: {ex.Message}");
+            view.OnRenderFailed(ex.Message);
+            ClearRenderBindings();
+        }
+    }
+
+    private void OnServerClientConnected(ClientIdentifier client)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            string address = _serverSession?.GetClientAddress(client) ?? "unknown";
+            ClientsPanel.OnClientConnected(client.Id.ToString(), client.DisplayName, address);
+            Log($"Client {FormatClientName(client)} joined from {address}");
+        });
+    }
+
+    private void OnServerClientDisconnected(ClientIdentifier client)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            ClientsPanel.OnClientDisconnected(client.Id.ToString());
+            Log($"Client {FormatClientName(client)} left");
+        });
+    }
+
+    private void BindRenderView(RenderView view, RenderSettings settings)
+    {
+        ClearRenderBindings();
+
+        if (_serverSession is null)
+        {
+            return;
+        }
+
+        _renderClientConnected = client => Dispatcher.UIThread.Post(() =>
+        {
+            view.OnClientConnected(
+                client.Id.ToString(),
+                client.DisplayName,
+                _serverSession?.GetClientAddress(client) ?? "unknown");
+        });
+        _renderClientDisconnected = client =>
+            Dispatcher.UIThread.Post(() => view.OnClientDisconnected(client.Id.ToString()));
+        _renderFrameDispatched = (client, frameIndex) =>
+            Dispatcher.UIThread.Post(() => view.OnFrameDispatched(client.Id.ToString(), frameIndex));
+        _renderFrameCompleted = (client, frameIndex, duration) =>
+            Dispatcher.UIThread.Post(() => view.OnFrameCompleted(client.Id.ToString(), frameIndex, duration));
+        _renderFrameFailed = (client, frameIndex) =>
+            Dispatcher.UIThread.Post(() => view.OnFrameFailed(client.Id.ToString(), frameIndex));
+        _renderTimingReportReady = report => Dispatcher.UIThread.Post(() => Log(report));
+        _renderCompleted = () => Dispatcher.UIThread.Post(() =>
+        {
+            view.OnRenderCompleted();
+            Log($"Render complete. Output saved: {settings.OutputPath}");
+            ClearRenderBindings();
+        });
+        _renderFailed = ex => Dispatcher.UIThread.Post(() =>
+        {
+            view.OnRenderFailed(ex.Message);
+            Log($"Render failed: {ex.Message}");
+            ClearRenderBindings();
+        });
+
+        _serverSession.ClientConnected += _renderClientConnected;
+        _serverSession.ClientDisconnected += _renderClientDisconnected;
+        _serverSession.FrameDispatched += _renderFrameDispatched;
+        _serverSession.FrameCompleted += _renderFrameCompleted;
+        _serverSession.FrameFailed += _renderFrameFailed;
+        _serverSession.TimingReportReady += _renderTimingReportReady;
+        _serverSession.RenderCompleted += _renderCompleted;
+        _serverSession.RenderFailed += _renderFailed;
+    }
+
+    private void ClearRenderBindings()
+    {
+        if (_serverSession is null)
+        {
+            return;
+        }
+
+        if (_renderClientConnected is not null)
+        {
+            _serverSession.ClientConnected -= _renderClientConnected;
+        }
+
+        if (_renderClientDisconnected is not null)
+        {
+            _serverSession.ClientDisconnected -= _renderClientDisconnected;
+        }
+
+        if (_renderFrameDispatched is not null)
+        {
+            _serverSession.FrameDispatched -= _renderFrameDispatched;
+        }
+
+        if (_renderFrameCompleted is not null)
+        {
+            _serverSession.FrameCompleted -= _renderFrameCompleted;
+        }
+
+        if (_renderFrameFailed is not null)
+        {
+            _serverSession.FrameFailed -= _renderFrameFailed;
+        }
+
+        if (_renderTimingReportReady is not null)
+        {
+            _serverSession.TimingReportReady -= _renderTimingReportReady;
+        }
+
+        if (_renderCompleted is not null)
+        {
+            _serverSession.RenderCompleted -= _renderCompleted;
+        }
+
+        if (_renderFailed is not null)
+        {
+            _serverSession.RenderFailed -= _renderFailed;
+        }
+
+        _renderClientConnected = null;
+        _renderClientDisconnected = null;
+        _renderFrameDispatched = null;
+        _renderFrameCompleted = null;
+        _renderFrameFailed = null;
+        _renderTimingReportReady = null;
+        _renderCompleted = null;
+        _renderFailed = null;
+    }
+
+    private static string FormatClientName(ClientIdentifier client)
+    {
+        return string.IsNullOrWhiteSpace(client.DisplayName) ? client.Id.ToString() : client.DisplayName;
+    }
+
     private void SetConsoleVisible(bool visible)
     {
-        ConsoleBorder.IsVisible   = visible;
+        ConsoleBorder.IsVisible = visible;
         ConsoleSplitter.IsVisible = visible;
         RootGrid.RowDefinitions[1].Height = visible ? new GridLength(5) : new GridLength(0);
         RootGrid.RowDefinitions[2].Height = visible ? new GridLength(150) : new GridLength(0);
@@ -151,72 +393,8 @@ public partial class MainWindow : Window
     private void SetSidebarVisible(bool visible)
     {
         ClientsSidebarBorder.IsVisible = visible;
-        ClientsSplitter.IsVisible      = visible;
+        ClientsSplitter.IsVisible = visible;
         ContentGrid.ColumnDefinitions[1].Width = visible ? new GridLength(5) : new GridLength(0);
         ContentGrid.ColumnDefinitions[2].Width = visible ? new GridLength(180) : new GridLength(0);
-    }
-
-    /// <summary>Swap content back to the main editor without tearing down an active session.</summary>
-    public void NavigateToMain(bool isServerMode)
-    {
-        SetConsoleVisible(true);
-        if (isServerMode)
-        {
-            SetSidebarVisible(true);
-            ContentArea.Content = new MainView(isServerMode);
-        }
-        else
-        {
-            SetSidebarVisible(false);
-            ContentArea.Content = new ClientView(string.Empty);
-        }
-    }
-
-    /// <summary>Kicks off a real distributed render and routes scheduler events to RenderView.</summary>
-    public RenderView NavigateToRender(bool isServerMode, RenderJobConfig config)
-    {
-        var view = new RenderView(isServerMode, config.TotalFrames);
-        SetConsoleVisible(true);
-        ContentArea.Content = view;
-
-        if (_serverNode is null)
-        {
-            Log("Cannot render: server is not running.");
-            return view;
-        }
-
-        // Build interpolated frame bounds sequence from keyframes.
-        var bounds = new KeyframeZoomSequenceGenerator()
-            .Generate(config.BaseOptions, config.Keyframes, config.TotalFrames, new SmoothStepInterpolation())
-            .ToList();
-
-        var frames = bounds
-            .Select((b, i) => new RenderFrameMessage(
-                _serverNode.Server.Identifier,
-                i,
-                config.Colorizer,
-                config.BaseOptions,
-                b))
-            .ToList();
-
-        var job = new GuiRenderJob(_serverNode, frames, config.OutputPath, config.FrameRate);
-        _currentJob = job;
-
-        job.ClientAvailable += client => Dispatcher.UIThread.Post(() =>
-        {
-            string name = _serverNode?.GetDisplayName(client) ?? string.Empty;
-            string addr = _serverNode?.Server.GetClientAddress(client.Id) ?? "unknown";
-            view.OnClientConnected(client.Id.ToString(), name, addr);
-        });
-        job.ClientFailed    += client => Dispatcher.UIThread.Post(() => view.OnClientDisconnected(client.Id.ToString()));
-        job.FrameDispatched += (client, idx) => Dispatcher.UIThread.Post(() => view.OnFrameDispatched(client.Id.ToString(), idx));
-        job.FrameCompleted  += (client, idx, dur) => Dispatcher.UIThread.Post(() => view.OnFrameCompleted(client.Id.ToString(), idx, dur));
-        job.TimingReportReady += report => Dispatcher.UIThread.Post(() => Log(report));
-        job.Completed         += path => Dispatcher.UIThread.Post(() => Log($"Render complete. GIF saved: {path}"));
-        job.Failed          += ex => Dispatcher.UIThread.Post(() => Log($"Render failed: {ex.Message}"));
-
-        Log($"Starting render: {config.TotalFrames} frames @ {config.FrameRate} fps → {config.OutputPath}");
-        _ = job.StartAsync();
-        return view;
     }
 }

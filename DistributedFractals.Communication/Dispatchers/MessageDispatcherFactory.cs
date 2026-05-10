@@ -2,6 +2,7 @@ using DistributedFractals.Fractal.Core;
 using DistributedFractals.Server.Core;
 using DistributedFractals.Server.Handlers;
 using DistributedFractals.Server.Heartbeat;
+using DistributedFractals.Server.Messages;
 
 namespace DistributedFractals.Server.Dispatchers;
 
@@ -13,7 +14,9 @@ public static class MessageDispatcherFactory
 
         dispatcher.Register(new JoinMessageHandler(server));
         dispatcher.Register(new HeartbeatMessageHandler(server));
-        dispatcher.Register(new RenderResultHandler(receiver));
+        RenderResultHandler renderResultHandler = new(receiver);
+        dispatcher.Register<RenderResultMessage>(renderResultHandler);
+        dispatcher.Register<RenderBatchResultMessage>(renderResultHandler);
 
         return dispatcher;
     }
@@ -27,12 +30,15 @@ public static class MessageDispatcherFactory
     ) {
         MessageDispatcher dispatcher = new();
 
-        dispatcher.Register(new RenderFractalHandler(
+        RenderFractalHandler renderFractalHandler = new(
             client,
             onFrameStarted,
             onFrameCompleted,
             onFrameFailed
-        ));
+        );
+
+        dispatcher.Register<RenderFrameMessage>(renderFractalHandler);
+        dispatcher.Register<RenderBatchMessage>(renderFractalHandler);
 
         dispatcher.Register(new UnregisteredMessageHandler(onDisconnected));
 
