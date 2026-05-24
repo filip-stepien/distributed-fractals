@@ -1,0 +1,120 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DistributedFractals.Gui.Views.RenderCompletionDialog"
+        Title="Render Complete"
+        Width="620"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource AppBgBrush}">
+
+    <Border Background="{StaticResource AppBgBrush}"
+            BorderBrush="{StaticResource AppBorderBrush}"
+            BorderThickness="1">
+        <StackPanel Margin="24" Spacing="18">
+            <StackPanel Spacing="6">
+                <TextBlock Text="Render complete"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource AppTextBrush}" />
+                <TextBlock Text="Saved to"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource AppTextMutedBrush}" />
+                <TextBox x:Name="OutputPathText"
+                         IsReadOnly="True"
+                         BorderThickness="0"
+                         Background="{StaticResource AppSurfaceBrush}"
+                         Foreground="{StaticResource AppTextBrush}"
+                         FontSize="12"
+                         Padding="10,8"
+                         ToolTip.Tip="{Binding #OutputPathText.Text}" />
+            </StackPanel>
+
+            <Grid ColumnDefinitions="*,*,*">
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Text="FRAMES"
+                               FontSize="10"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource AppTextMutedBrush}" />
+                    <TextBlock x:Name="FramesText"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource AppTextBrush}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="4">
+                    <TextBlock Text="CLIENTS"
+                               FontSize="10"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource AppTextMutedBrush}" />
+                    <TextBlock x:Name="ClientsText"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource AppTextBrush}" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Spacing="4">
+                    <TextBlock Text="FAILED"
+                               FontSize="10"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource AppTextMutedBrush}" />
+                    <TextBlock x:Name="FailedText"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource AppTextBrush}" />
+                </StackPanel>
+            </Grid>
+
+            <StackPanel Spacing="8">
+                <TextBlock Text="Per client"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource AppTextBrush}" />
+                <Border BorderBrush="{StaticResource AppBorderBrush}"
+                        BorderThickness="1"
+                        Background="{StaticResource AppSurfaceBrush}">
+                    <Grid RowDefinitions="Auto,*">
+                        <Grid Grid.Row="0"
+                              ColumnDefinitions="*,92,82,82"
+                              Margin="12,10,12,8">
+                            <TextBlock Text="CLIENT"
+                                       FontSize="10"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource AppTextMutedBrush}" />
+                            <TextBlock Grid.Column="1"
+                                       Text="STATUS"
+                                       FontSize="10"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource AppTextMutedBrush}" />
+                            <TextBlock Grid.Column="2"
+                                       Text="FRAMES"
+                                       FontSize="10"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Right"
+                                       Foreground="{StaticResource AppTextMutedBrush}" />
+                            <TextBlock Grid.Column="3"
+                                       Text="FAILED"
+                                       FontSize="10"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Right"
+                                       Foreground="{StaticResource AppTextMutedBrush}" />
+                        </Grid>
+                        <ScrollViewer Grid.Row="1"
+                                      MaxHeight="220"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="ClientRowsPanel" />
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <Button Content="OK"
+                    Classes="accent"
+                    MinWidth="100"
+                    HorizontalAlignment="Right"
+                    HorizontalContentAlignment="Center"
+                    Padding="20,10"
+                    Click="OnCloseClick" />
+        </StackPanel>
+    </Border>
+</Window>

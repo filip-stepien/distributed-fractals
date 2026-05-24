@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -13,7 +14,6 @@ public partial class RenderView : UserControl
     private readonly bool _isServerMode;
     private readonly int _totalFrames;
     private readonly Dictionary<string, ClientCard> _cards = new();
-    private readonly List<string> _timingReports = new();
 
     private static readonly Color AccentColor = Color.FromRgb(0x4A, 0x9E, 0xFF);
     private static readonly Color GreenColor = Color.FromRgb(0x22, 0xC5, 0x5E);
@@ -26,6 +26,7 @@ public partial class RenderView : UserControl
     private int _framesDone;
     private int _framesInFlight;
     private int _framesFailed;
+    private bool _renderCompleted;
 
     public RenderView(bool isServerMode, int totalFrames)
     {
@@ -117,18 +118,18 @@ public partial class RenderView : UserControl
         card.CurrentInfo.Text = $"{frameIndex} failed";
     }
 
-    public void OnTimingReport(string report)
-    {
-        if (!string.IsNullOrWhiteSpace(report))
-        {
-            _timingReports.Add(report);
-        }
-    }
-
-    public void OnRenderCompleted(string outputPath)
+    public async void OnRenderCompleted(string outputPath)
     {
         MarkFinished();
-        ShowReport(outputPath);
+        _renderCompleted = true;
+
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+        {
+            return;
+        }
+
+        var dialog = new RenderCompletionDialog(BuildCompletionReport(outputPath));
+        await dialog.ShowDialog(owner);
     }
 
     public void OnRenderFailed(string message)
@@ -148,6 +149,7 @@ public partial class RenderView : UserControl
         public required TextBlock AvgTimeText { get; init; }
         public required TextBlock CurrentInfo { get; init; }
         public required Border CardBorder { get; init; }
+        public required string Title { get; init; }
 
         public int FramesDone { get; set; }
         public int FramesFailed { get; set; }
@@ -290,7 +292,8 @@ public partial class RenderView : UserControl
             StatusLabel = statusLabel,
             FramesCount = framesCount,
             AvgTimeText = avgTimeText,
-            CurrentInfo = currentInfo
+            CurrentInfo = currentInfo,
+            Title = title
         };
     }
 
@@ -313,6 +316,16 @@ public partial class RenderView : UserControl
 
     private async void OnBackClick(object? sender, RoutedEventArgs e)
     {
+        if (_renderCompleted)
+        {
+            if (VisualRoot is MainWindow completedWindow)
+            {
+                completedWindow.NavigateToMain(_isServerMode);
+            }
+
+            return;
+        }
+
         var dialog = new ConfirmDialog(
             "Cancel render?",
             "Going back will cancel the current render. This cannot be undone.",
@@ -372,22 +385,19 @@ public partial class RenderView : UserControl
         CancelButton.IsEnabled = false;
     }
 
-    private void ShowReport(string outputPath)
+    private RenderCompletionReport BuildCompletionReport(string outputPath)
     {
-        ClientCardsScroll.IsVisible = false;
-        ReportPanel.IsVisible = true;
-
-        ReportOutputPathText.Text = $"Saved to {outputPath}";
-        ReportFramesText.Text = $"{_framesDone} / {_totalFrames}";
-        ReportClientsText.Text = _cards.Count.ToString();
-        ReportFailedText.Text = _framesFailed.ToString();
-
-        if (_timingReports.Count == 0)
-        {
-            ReportDetailsText.Text = "No timing details were reported.";
-            return;
-        }
-
-        ReportDetailsText.Text = string.Join(Environment.NewLine + Environment.NewLine, _timingReports);
+        return new RenderCompletionReport(
+            OutputPath: outputPath,
+            FramesDone: _framesDone,
+            TotalFrames: _totalFrames,
+            FailedFrames: _framesFailed,
+            Clients: _cards.Values
+                .Select(card => new RenderCompletionClientReport(
+                    Name: card.Title,
+                    Status: card.StatusLabel.Text ?? "-",
+                    FramesDone: card.FramesDone,
+                    FailedFrames: card.FramesFailed))
+                .ToList());
     }
 }

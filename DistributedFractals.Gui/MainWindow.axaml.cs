@@ -23,7 +23,6 @@ public partial class MainWindow : Window
     private Action<ClientIdentifier, int>? _renderFrameFailed;
     private Action<ClientIdentifier>? _renderClientConnected;
     private Action<ClientIdentifier>? _renderClientDisconnected;
-    private Action<string>? _renderTimingReportReady;
     private Action? _renderCompleted;
     private Action<Exception>? _renderFailed;
 
@@ -283,7 +282,6 @@ public partial class MainWindow : Window
             Dispatcher.UIThread.Post(() => view.OnFrameCompleted(client.Id.ToString(), frameIndex, duration));
         _renderFrameFailed = (client, frameIndex) =>
             Dispatcher.UIThread.Post(() => view.OnFrameFailed(client.Id.ToString(), frameIndex));
-        _renderTimingReportReady = report => Dispatcher.UIThread.Post(() => view.OnTimingReport(report));
         _renderCompleted = () => Dispatcher.UIThread.Post(() =>
         {
             view.OnRenderCompleted(settings.OutputPath);
@@ -301,7 +299,6 @@ public partial class MainWindow : Window
         _serverSession.FrameDispatched += _renderFrameDispatched;
         _serverSession.FrameCompleted += _renderFrameCompleted;
         _serverSession.FrameFailed += _renderFrameFailed;
-        _serverSession.TimingReportReady += _renderTimingReportReady;
         _serverSession.RenderCompleted += _renderCompleted;
         _serverSession.RenderFailed += _renderFailed;
     }
@@ -338,11 +335,6 @@ public partial class MainWindow : Window
             _serverSession.FrameFailed -= _renderFrameFailed;
         }
 
-        if (_renderTimingReportReady is not null)
-        {
-            _serverSession.TimingReportReady -= _renderTimingReportReady;
-        }
-
         if (_renderCompleted is not null)
         {
             _serverSession.RenderCompleted -= _renderCompleted;
@@ -358,7 +350,6 @@ public partial class MainWindow : Window
         _renderFrameDispatched = null;
         _renderFrameCompleted = null;
         _renderFrameFailed = null;
-        _renderTimingReportReady = null;
         _renderCompleted = null;
         _renderFailed = null;
     }
