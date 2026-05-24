@@ -8,6 +8,7 @@ public sealed record RenderFrameResult(
 
 public sealed record RenderBatchResultMessage(
     Guid Sender,
+    Guid RenderJobId,
     int BatchId,
     IReadOnlyList<RenderFrameResult> Results,
     TimeSpan RenderDuration

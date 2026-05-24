@@ -1,3 +1,4 @@
+using System.Runtime;
 using DistributedFractals.Fractal.Core;
 using DistributedFractals.Fractal.Zoom;
 using DistributedFractals.Orchestration.Schedulers;
@@ -60,13 +61,32 @@ public sealed class ServerSession : IServerSession, IFrameResultReceiver
     private async Task SaveAsync(FrameScheduler scheduler, string outputPath, int fps, VideoFormat format)
     {
         IVideoWriter writer = VideoWriterFactory.Create(outputPath, fps, format);
+        List<FractalResult?> frames = scheduler.DrainOrderedResults()
+            .Cast<FractalResult?>()
+            .ToList();
 
-        foreach (FractalResult frame in scheduler.GetOrderedResults())
+        for (int i = 0; i < frames.Count; i++)
         {
+            FractalResult? frame = frames[i];
+            if (frame is null)
+            {
+                continue;
+            }
+
             await writer.WriteFrameAsync(frame);
+            frames[i] = null;
         }
 
+        frames.Clear();
+        CompactLargeObjectHeap();
         await writer.DisposeAsync();
+    }
+
+    private static void CompactLargeObjectHeap()
+    {
+        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+        GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true);
+        GC.WaitForPendingFinalizers();
     }
 
     private async Task CompleteRenderAsync(FrameScheduler scheduler, RenderSettings settings)
@@ -94,6 +114,7 @@ public sealed class ServerSession : IServerSession, IFrameResultReceiver
 
     private IEnumerable<RenderFrameMessage> BuildFrames(RenderSettings settings)
     {
+        Guid renderJobId = Guid.NewGuid();
         IEnumerable<FrameBounds> frameBounds = new KeyframeZoomSequenceGenerator()
             .Generate(
                 options: settings.Options,
@@ -105,6 +126,7 @@ public sealed class ServerSession : IServerSession, IFrameResultReceiver
         return frameBounds.Select(
             (bounds, i) => new RenderFrameMessage(
                 Sender: _server!.Identifier,
+                RenderJobId: renderJobId,
                 FrameIndex: i,
                 ColorizerType: settings.Colorizer,
                 Options: settings.Options,
@@ -178,14 +200,14 @@ public sealed class ServerSession : IServerSession, IFrameResultReceiver
         return _server?.GetClientAddress(client.Id);
     }
 
-    void IFrameResultReceiver.OnResultReceived(Guid clientId, int frameIndex, FractalResult result, TimeSpan renderDuration)
+    void IFrameResultReceiver.OnResultReceived(Guid clientId, Guid renderJobId, int frameIndex, FractalResult result, TimeSpan renderDuration)
     {
-        _scheduler?.OnResultReceived(clientId, frameIndex, result, renderDuration);
+        _scheduler?.OnResultReceived(clientId, renderJobId, frameIndex, result, renderDuration);
     }
 
-    void IFrameResultReceiver.OnBatchResultReceived(Guid clientId, int batchId, IReadOnlyList<RenderFrameResult> results, TimeSpan renderDuration)
+    void IFrameResultReceiver.OnBatchResultReceived(Guid clientId, Guid renderJobId, int batchId, IReadOnlyList<RenderFrameResult> results, TimeSpan renderDuration)
     {
-        _scheduler?.OnBatchResultReceived(clientId, batchId, results, renderDuration);
+        _scheduler?.OnBatchResultReceived(clientId, renderJobId, batchId, results, renderDuration);
     }
 
     private void DetachScheduler(FrameScheduler scheduler)

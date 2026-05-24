@@ -35,6 +35,7 @@ public class TcpClient(IPAddress serverAddress, int port, ISerializer serializer
     public ValueTask DisposeAsync()
     {
         _cts?.Cancel();
+        _stream?.Dispose();
         _client?.Close();
         _client = null;
         _stream = null;

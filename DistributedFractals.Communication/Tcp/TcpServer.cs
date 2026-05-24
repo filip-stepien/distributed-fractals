@@ -18,7 +18,11 @@ public class TcpServer(IPAddress listenAddress, int port, ISerializer serializer
 
     public override void UnregisterClient(ClientIdentifier client)
     {
-        _streams.TryRemove(client.Id, out _);
+        if (_streams.TryRemove(client.Id, out TcpStream? stream))
+        {
+            stream.Dispose();
+        }
+
         _addresses.TryRemove(client.Id, out _);
         base.UnregisterClient(client);
     }
@@ -45,6 +49,11 @@ public class TcpServer(IPAddress listenAddress, int port, ISerializer serializer
     public override ValueTask DisposeAsync()
     {
         _cts?.Cancel();
+        foreach (TcpStream stream in _streams.Values)
+        {
+            stream.Dispose();
+        }
+
         _streams.Clear();
         _listener?.Stop();
         _listener = null;
@@ -112,9 +121,13 @@ public class TcpServer(IPAddress listenAddress, int port, ISerializer serializer
             // heartbeat timeout is responsible for detecting and unregistering dead clients
             if (clientId.HasValue)
             {
-                _streams.TryRemove(clientId.Value, out _);
+                if (_streams.TryRemove(clientId.Value, out TcpStream? removedStream))
+                {
+                    removedStream.Dispose();
+                }
             }
 
+            stream.Dispose();
             client.Close();
         }
     }

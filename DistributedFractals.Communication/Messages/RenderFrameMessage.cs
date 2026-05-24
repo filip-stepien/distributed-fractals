@@ -7,6 +7,7 @@ namespace DistributedFractals.Server.Messages;
 
 public sealed record RenderFrameMessage(
     Guid Sender,
+    Guid RenderJobId,
     int FrameIndex,
     FractalColorizerType ColorizerType,
     IFractalGeneratorOptions Options,

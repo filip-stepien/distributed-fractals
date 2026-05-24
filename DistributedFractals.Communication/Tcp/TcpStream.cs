@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 
 namespace DistributedFractals.Server.Tcp;
 
-internal sealed class TcpStream(Stream stream)
+internal sealed class TcpStream(Stream stream) : IDisposable
 {
     private const int LengthPrefixSize = 4;
     
@@ -43,5 +43,10 @@ internal sealed class TcpStream(Stream stream)
         await ReadExactlyAsync(buffer, cancellationToken);
 
         return buffer;
+    }
+
+    public void Dispose()
+    {
+        stream.Dispose();
     }
 }

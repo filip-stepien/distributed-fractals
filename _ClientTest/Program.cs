@@ -10,7 +10,7 @@ using DistributedFractals.Server.Tcp;
 Logger.Initialize(new ConsoleLogger());
 
 IMessageClient client = new TcpTransportFactory(
-    IPAddress.Loopback, 3000, new JsonSerializer()
+    IPAddress.Loopback, 3000, new BinaryMessageSerializer()
 ).CreateClient();
 
 MessageDispatcher dispatcher = new();

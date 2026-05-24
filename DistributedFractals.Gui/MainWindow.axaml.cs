@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
@@ -27,11 +28,14 @@ public partial class MainWindow : Window
     private Action<string>? _renderTimingReportReady;
     private Action? _renderCompleted;
     private Action<Exception>? _renderFailed;
+    private static readonly bool LoggingEnabled = false;
+    private const int MaxLogLines = 200;
+    private readonly Queue<string> _logLines = new();
 
     public MainWindow()
     {
         InitializeComponent();
-        Logger.Initialize(new GuiLogger(Log));
+        Logger.Initialize(LoggingEnabled ? new GuiLogger(Log) : NullLogger.Instance);
 
         ClientsSidebarContent.Content = ClientsPanel;
         ContentArea.Content = new ConnectView();
@@ -60,6 +64,7 @@ public partial class MainWindow : Window
     public async void NavigateToConnect()
     {
         CancelRender();
+        CleanupCurrentView();
         SetSidebarVisible(false);
         SetConsoleVisible(false);
 
@@ -96,6 +101,7 @@ public partial class MainWindow : Window
     public void NavigateToMain(bool isServerMode)
     {
         SetConsoleVisible(true);
+        CleanupCurrentView();
 
         if (isServerMode)
         {
@@ -112,6 +118,7 @@ public partial class MainWindow : Window
     {
         var view = new RenderView(isServerMode, settings.TotalFrames);
         SetConsoleVisible(true);
+        CleanupCurrentView();
         ContentArea.Content = view;
 
         if (_serverSession is null)
@@ -145,6 +152,11 @@ public partial class MainWindow : Window
 
     public void Log(string message)
     {
+        if (!LoggingEnabled)
+        {
+            return;
+        }
+
         if (!Dispatcher.UIThread.CheckAccess())
         {
             Dispatcher.UIThread.Post(() => Log(message));
@@ -152,15 +164,20 @@ public partial class MainWindow : Window
         }
 
         string line = $"[{DateTime.Now:HH:mm:ss}] {message}";
-        LogTextBox.Text = string.IsNullOrEmpty(LogTextBox.Text)
-            ? line
-            : LogTextBox.Text + Environment.NewLine + line;
+        _logLines.Enqueue(line);
+        while (_logLines.Count > MaxLogLines)
+        {
+            _logLines.Dequeue();
+        }
+
+        LogTextBox.Text = string.Join(Environment.NewLine, _logLines);
         LogTextBox.CaretIndex = LogTextBox.Text.Length;
     }
 
     private void StartServerView(string address, int port, int timeoutSeconds, TransportProtocol protocol)
     {
         SetSidebarVisible(true);
+        CleanupCurrentView();
         ClientsPanel.Reset();
         ContentArea.Content = new MainView(isServerMode: true);
 
@@ -186,6 +203,7 @@ public partial class MainWindow : Window
         TransportProtocol protocol)
     {
         SetSidebarVisible(false);
+        CleanupCurrentView();
 
         var view = new ClientView($"{address}:{port}");
         ContentArea.Content = view;
@@ -380,6 +398,19 @@ public partial class MainWindow : Window
     private static string FormatClientName(ClientIdentifier client)
     {
         return string.IsNullOrWhiteSpace(client.DisplayName) ? client.Id.ToString() : client.DisplayName;
+    }
+
+    private void CleanupCurrentView()
+    {
+        switch (ContentArea.Content)
+        {
+            case MainView mainView:
+                mainView.Cleanup();
+                break;
+            case ClientView clientView:
+                clientView.Cleanup();
+                break;
+        }
     }
 
     private void SetConsoleVisible(bool visible)
