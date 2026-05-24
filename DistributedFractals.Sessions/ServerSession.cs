@@ -140,7 +140,8 @@ public sealed class ServerSession : IServerSession, IFrameResultReceiver
             server: _server,
             frames: BuildFrames(renderSettings),
             clientSelector: ClientSelectorFactory.Create(renderSettings.ClientSelector),
-            framesPerBatch: renderSettings.FramesPerBatch
+            framesPerBatch: renderSettings.FramesPerBatch,
+            maxBatchesPerClient: renderSettings.MaxBatchesPerClient
         );
 
         _scheduler.FrameDispatched += OnFrameDispatched;

@@ -516,6 +516,7 @@ public partial class MainView : UserControl
             : FractalColorizerType.CyclingHsv;
 
         int framesPerBatch = (int)(FramesPerBatchInput.Value ?? 1);
+        int maxBatchesPerClient = (int)(MaxBatchesPerClientInput.Value ?? 1);
         ZoomInterpolationType interpolation = InterpolationCombo.SelectedIndex == 0
             ? ZoomInterpolationType.Linear
             : ZoomInterpolationType.SmoothStep;
@@ -528,6 +529,7 @@ public partial class MainView : UserControl
             Fps: fps,
             Interpolation: interpolation,
             FramesPerBatch: framesPerBatch,
+            MaxBatchesPerClient: maxBatchesPerClient,
             ClientSelector: ClientSelectorType.RoundRobin,
             OutputFormat: VideoFormat.Gif,
             OutputPath: dialog.OutputPath

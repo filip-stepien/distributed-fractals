@@ -14,6 +14,7 @@ public sealed record RenderSettings(
     int Fps,
     ZoomInterpolationType Interpolation,
     int FramesPerBatch,
+    int MaxBatchesPerClient,
     ClientSelectorType ClientSelector,
     VideoFormat OutputFormat,
     string OutputPath
