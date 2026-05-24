@@ -1,4 +1,5 @@
 using System.Net;
+using System.Runtime;
 using DistributedFractals.Fractal.Colorizers;
 using DistributedFractals.Fractal.Core;
 using DistributedFractals.Fractal.Generators.Mandelbrot;
@@ -32,12 +33,14 @@ List<FrameBounds> frameBounds = new KeyframeZoomSequenceGenerator()
     .ToList();
 
 HeartbeatMessageServer master = new(new TcpTransportFactory(
-    IPAddress.Loopback, 3000, new JsonSerializer()
+    IPAddress.Loopback, 3000, new BinaryMessageSerializer()
 ).CreateServer(), TimeSpan.FromSeconds(30));
 
+Guid renderJobId = Guid.NewGuid();
 List<RenderFrameMessage> frames = frameBounds
     .Select((bounds, i) => new RenderFrameMessage(
         master.Identifier,
+        renderJobId,
         i,
         FractalColorizerType.CyclingHsv,
         baseOptions,
@@ -82,11 +85,26 @@ Logger.Log("All frames received. Saving GIF...");
 string outputPath = Path.Combine(Path.GetTempPath(), "fractal_zoom.gif");
 GifVideoWriter videoWriter = new(outputPath, frameRate: 24, repeat: true);
 
-foreach (FractalResult frame in scheduler.GetOrderedResults())
+List<FractalResult?> orderedFrames = scheduler.DrainOrderedResults()
+    .Cast<FractalResult?>()
+    .ToList();
+
+for (int i = 0; i < orderedFrames.Count; i++)
 {
+    FractalResult? frame = orderedFrames[i];
+    if (frame is null)
+    {
+        continue;
+    }
+
     await videoWriter.WriteFrameAsync(frame);
+    orderedFrames[i] = null;
 }
 
+orderedFrames.Clear();
+GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true);
+GC.WaitForPendingFinalizers();
 await videoWriter.DisposeAsync();
 Logger.Log($"GIF saved: {outputPath}");
 

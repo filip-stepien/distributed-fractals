@@ -10,7 +10,7 @@ public static class TransportFactoryResolver
     public static ITransportFactory Create(ConnectionSettings conn)
     {
         IPAddress address = IPAddress.Parse(conn.Address);
-        JsonSerializer serializer = new();
+        BinaryMessageSerializer serializer = new();
 
         return conn.Protocol switch
         {

@@ -61,6 +61,11 @@ public partial class MainView : UserControl
         Log("Application started. Click 'Default' to add the full view keyframe, then select a keyframe to preview and use + to add more.");
     }
 
+    public void Cleanup()
+    {
+        FractalImage.Source = null;
+    }
+
 
 
     private Task GeneratePreviewForKeyframeAsync(ZoomKeyframe kf)

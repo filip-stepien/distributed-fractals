@@ -14,6 +14,7 @@ public sealed class FrameScheduler : IFrameScheduler
     private readonly int _framesPerBatch;
     private readonly int _maxBatchesPerClient;
     private readonly int _totalFrames;
+    private readonly Guid _renderJobId;
     private readonly System.Diagnostics.Stopwatch _renderClock = System.Diagnostics.Stopwatch.StartNew();
 
     private readonly Queue<RenderBatchMessage> _pending;
@@ -42,6 +43,7 @@ public sealed class FrameScheduler : IFrameScheduler
         _maxBatchesPerClient = Math.Max(1, maxBatchesPerClient);
 
         List<RenderFrameMessage> frameList = frames.ToList();
+        _renderJobId = frameList.FirstOrDefault()?.RenderJobId ?? Guid.NewGuid();
         _pending = BuildBatches(frameList);
         _totalFrames = frameList.Count;
 
@@ -61,6 +63,16 @@ public sealed class FrameScheduler : IFrameScheduler
         lock (_lock)
         {
             return _completed.Values.ToList();
+        }
+    }
+
+    public IReadOnlyList<FractalResult> DrainOrderedResults()
+    {
+        lock (_lock)
+        {
+            List<FractalResult> results = _completed.Values.ToList();
+            _completed.Clear();
+            return results;
         }
     }
 
@@ -152,10 +164,15 @@ public sealed class FrameScheduler : IFrameScheduler
         }
     }
 
-    public void OnResultReceived(Guid clientId, int frameIndex, FractalResult result, TimeSpan renderDuration)
+    public void OnResultReceived(Guid clientId, Guid renderJobId, int frameIndex, FractalResult result, TimeSpan renderDuration)
     {
         lock (_lock)
         {
+            if (renderJobId != _renderJobId)
+            {
+                return;
+            }
+
             ClientIdentifier? client = _inFlight.Keys.FirstOrDefault(c => c.Id == clientId);
             if (client is null)
             {
@@ -177,10 +194,15 @@ public sealed class FrameScheduler : IFrameScheduler
         }
     }
 
-    public void OnBatchResultReceived(Guid clientId, int batchId, IReadOnlyList<RenderFrameResult> results, TimeSpan renderDuration)
+    public void OnBatchResultReceived(Guid clientId, Guid renderJobId, int batchId, IReadOnlyList<RenderFrameResult> results, TimeSpan renderDuration)
     {
         lock (_lock)
         {
+            if (renderJobId != _renderJobId)
+            {
+                return;
+            }
+
             ClientIdentifier? client = _inFlight.Keys.FirstOrDefault(c => c.Id == clientId);
             if (client is null)
             {
@@ -230,7 +252,7 @@ public sealed class FrameScheduler : IFrameScheduler
                 .Take(_framesPerBatch)
                 .ToList();
 
-            batches.Enqueue(new RenderBatchMessage(_server.Identifier, batchId++, batchFrames));
+            batches.Enqueue(new RenderBatchMessage(_server.Identifier, _renderJobId, batchId++, batchFrames));
         }
 
         return batches;
@@ -343,7 +365,32 @@ public sealed class FrameScheduler : IFrameScheduler
                 FrameDispatched?.Invoke(client, frame.FrameIndex);
             }
 
-            _ = _server.SendToClientAsync(client, msg);
+            _ = SendBatchAsync(client, msg);
+        }
+    }
+
+    private async Task SendBatchAsync(ClientIdentifier client, RenderBatchMessage msg)
+    {
+        try
+        {
+            await _server.SendToClientAsync(client, msg);
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"Failed to send batch {msg.BatchId} to client {client.DisplayName}: {ex.Message}");
+
+            lock (_lock)
+            {
+                if (_inFlight.Remove(client, out List<(RenderBatchMessage msg, DateTime dispatchedAt)>? batches))
+                {
+                    foreach ((RenderBatchMessage failedMessage, _) in batches)
+                    {
+                        _pending.Enqueue(failedMessage);
+                    }
+                }
+
+                TryDispatch();
+            }
         }
     }
 

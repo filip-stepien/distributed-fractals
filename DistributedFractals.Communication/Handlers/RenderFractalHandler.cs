@@ -16,7 +16,7 @@ public class RenderFractalHandler(
     public async Task HandleAsync(RenderFrameMessage message)
     {
         RenderFrameResult result = await RenderFrameAsync(message);
-        await client.SendToServerAsync(new RenderResultMessage(client.Identifier, result.FrameIndex, result.Result, result.RenderDuration));
+        await client.SendToServerAsync(new RenderResultMessage(client.Identifier, message.RenderJobId, result.FrameIndex, result.Result, result.RenderDuration));
         onCompleted?.Invoke(result.FrameIndex, result.RenderDuration, result.Result);
     }
 
@@ -34,7 +34,7 @@ public class RenderFractalHandler(
         TimeSpan batchDuration = DateTime.UtcNow - batchStart;
         Logger.Log($"Batch {message.BatchId} rendered ({results.Count} frames). Sending results...");
 
-        await client.SendToServerAsync(new RenderBatchResultMessage(client.Identifier, message.BatchId, results, batchDuration));
+        await client.SendToServerAsync(new RenderBatchResultMessage(client.Identifier, message.RenderJobId, message.BatchId, results, batchDuration));
 
         foreach (RenderFrameResult result in results)
         {

@@ -24,6 +24,11 @@ public partial class ClientView : UserControl
 
     public bool ShowPreview => PreviewToggle.IsChecked == true;
 
+    public void Cleanup()
+    {
+        FramePreview.Source = null;
+    }
+
     public void OnConnected()
     {
         SetConnected(true);
