@@ -31,35 +31,47 @@
                          ToolTip.Tip="{Binding #OutputPathText.Text}" />
             </StackPanel>
 
-            <Grid ColumnDefinitions="*,*,*">
+            <Grid ColumnDefinitions="*,32,*,32,*">
                 <StackPanel Grid.Column="0" Spacing="4">
-                    <TextBlock Text="FRAMES"
-                               FontSize="10"
+                    <TextBlock Text="Total time"
+                               FontSize="12"
                                FontWeight="SemiBold"
-                               Foreground="{StaticResource AppTextMutedBrush}" />
-                    <TextBlock x:Name="FramesText"
-                               FontSize="22"
-                               FontWeight="Bold"
                                Foreground="{StaticResource AppTextBrush}" />
-                </StackPanel>
-                <StackPanel Grid.Column="1" Spacing="4">
-                    <TextBlock Text="CLIENTS"
+                    <TextBlock Text="Total time of rendering process"
                                FontSize="10"
-                               FontWeight="SemiBold"
+                               TextWrapping="Wrap"
                                Foreground="{StaticResource AppTextMutedBrush}" />
-                    <TextBlock x:Name="ClientsText"
-                               FontSize="22"
-                               FontWeight="Bold"
+                    <TextBlock x:Name="RenderTimeText"
+                               FontSize="18"
+                               FontWeight="SemiBold"
                                Foreground="{StaticResource AppTextBrush}" />
                 </StackPanel>
                 <StackPanel Grid.Column="2" Spacing="4">
-                    <TextBlock Text="FAILED"
-                               FontSize="10"
+                    <TextBlock Text="Avg render"
+                               FontSize="12"
                                FontWeight="SemiBold"
+                               Foreground="{StaticResource AppTextBrush}" />
+                    <TextBlock Text="Average client-side render time per batch"
+                               FontSize="10"
+                               TextWrapping="Wrap"
                                Foreground="{StaticResource AppTextMutedBrush}" />
-                    <TextBlock x:Name="FailedText"
-                               FontSize="22"
-                               FontWeight="Bold"
+                    <TextBlock x:Name="AverageRenderText"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource AppTextBrush}" />
+                </StackPanel>
+                <StackPanel Grid.Column="4" Spacing="4">
+                    <TextBlock Text="Avg comm"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource AppTextBrush}" />
+                    <TextBlock Text="Average communication overhead per batch"
+                               FontSize="10"
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource AppTextMutedBrush}" />
+                    <TextBlock x:Name="AverageCommunicationText"
+                               FontSize="18"
+                               FontWeight="SemiBold"
                                Foreground="{StaticResource AppTextBrush}" />
                 </StackPanel>
             </Grid>
@@ -72,49 +84,31 @@
                 <Border BorderBrush="{StaticResource AppBorderBrush}"
                         BorderThickness="1"
                         Background="{StaticResource AppSurfaceBrush}">
-                    <Grid RowDefinitions="Auto,*">
-                        <Grid Grid.Row="0"
-                              ColumnDefinitions="*,92,82,82"
-                              Margin="12,10,12,8">
-                            <TextBlock Text="CLIENT"
-                                       FontSize="10"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource AppTextMutedBrush}" />
-                            <TextBlock Grid.Column="1"
-                                       Text="STATUS"
-                                       FontSize="10"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource AppTextMutedBrush}" />
-                            <TextBlock Grid.Column="2"
-                                       Text="FRAMES"
-                                       FontSize="10"
-                                       FontWeight="SemiBold"
-                                       HorizontalAlignment="Right"
-                                       Foreground="{StaticResource AppTextMutedBrush}" />
-                            <TextBlock Grid.Column="3"
-                                       Text="FAILED"
-                                       FontSize="10"
-                                       FontWeight="SemiBold"
-                                       HorizontalAlignment="Right"
-                                       Foreground="{StaticResource AppTextMutedBrush}" />
-                        </Grid>
-                        <ScrollViewer Grid.Row="1"
-                                      MaxHeight="220"
-                                      HorizontalScrollBarVisibility="Disabled"
-                                      VerticalScrollBarVisibility="Auto">
-                            <StackPanel x:Name="ClientRowsPanel" />
-                        </ScrollViewer>
-                    </Grid>
+                    <ScrollViewer MaxHeight="220"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Auto">
+                        <StackPanel x:Name="ClientRowsPanel" Margin="0,8" />
+                    </ScrollViewer>
                 </Border>
             </StackPanel>
 
-            <Button Content="OK"
-                    Classes="accent"
-                    MinWidth="100"
-                    HorizontalAlignment="Right"
-                    HorizontalContentAlignment="Center"
-                    Padding="20,10"
-                    Click="OnCloseClick" />
+            <Grid ColumnDefinitions="*,8,*"
+                  HorizontalAlignment="Right">
+                <Button Grid.Column="0"
+                        Content="Export CSV"
+                        Classes="muted"
+                        MinWidth="120"
+                        HorizontalContentAlignment="Center"
+                        Padding="20,10"
+                        Click="OnExportCsvClick" />
+                <Button Grid.Column="2"
+                        Content="OK"
+                        Classes="accent"
+                        MinWidth="100"
+                        HorizontalContentAlignment="Center"
+                        Padding="20,10"
+                        Click="OnCloseClick" />
+            </Grid>
         </StackPanel>
     </Border>
 </Window>

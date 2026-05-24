@@ -76,6 +76,49 @@ public sealed class FrameScheduler : IFrameScheduler
         }
     }
 
+    public RenderTimingSummary GetTimingSummary()
+    {
+        lock (_lock)
+        {
+            List<FrameTiming> timings = _timings.ToList();
+            List<BatchTiming> batchTimings = _batchTimings.ToList();
+            Dictionary<ClientIdentifier, List<BatchTiming>> batchesByClient = batchTimings
+                .GroupBy(t => t.Client)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            List<ClientTimingSummary> clients = timings
+                .GroupBy(t => t.Client)
+                .OrderBy(g => string.IsNullOrWhiteSpace(g.Key.DisplayName) ? g.Key.Id.ToString() : g.Key.DisplayName)
+                .Select(frameGroup =>
+                {
+                    batchesByClient.TryGetValue(frameGroup.Key, out List<BatchTiming>? clientBatches);
+                    clientBatches ??= [];
+
+                    return new ClientTimingSummary(
+                        Client: frameGroup.Key,
+                        FrameCount: frameGroup.Count(),
+                        BatchCount: clientBatches.Count,
+                        AverageFrameRender: AverageDuration(frameGroup.Select(t => t.RenderDuration)),
+                        AverageBatchRoundtrip: AverageDuration(clientBatches.Select(t => t.Roundtrip)),
+                        AverageBatchRender: AverageDuration(clientBatches.Select(t => t.RenderDuration)),
+                        AverageBatchCommunication: AverageDuration(clientBatches.Select(t => ClampOverhead(t.CommunicationOverhead))));
+                })
+                .ToList();
+
+            return new RenderTimingSummary(
+                RenderElapsed: _renderClock.Elapsed,
+                FrameCount: timings.Count,
+                BatchCount: batchTimings.Count,
+                ClientCount: clients.Count,
+                FramesPerBatch: _framesPerBatch,
+                AverageFrameRender: AverageDuration(timings.Select(t => t.RenderDuration)),
+                AverageBatchRoundtrip: AverageDuration(batchTimings.Select(t => t.Roundtrip)),
+                AverageBatchRender: AverageDuration(batchTimings.Select(t => t.RenderDuration)),
+                AverageBatchCommunication: AverageDuration(batchTimings.Select(t => ClampOverhead(t.CommunicationOverhead))),
+                Clients: clients);
+        }
+    }
+
     public string GetTimingReport()
     {
         lock (_lock)
@@ -404,5 +447,18 @@ public sealed class FrameScheduler : IFrameScheduler
         int first = frames.Min(f => f.FrameIndex);
         int last = frames.Max(f => f.FrameIndex);
         return first == last ? first.ToString() : $"{first}-{last}";
+    }
+
+    private static TimeSpan AverageDuration(IEnumerable<TimeSpan> durations)
+    {
+        List<TimeSpan> values = durations.ToList();
+        return values.Count == 0
+            ? TimeSpan.Zero
+            : TimeSpan.FromTicks((long)values.Average(duration => duration.Ticks));
+    }
+
+    private static TimeSpan ClampOverhead(TimeSpan overhead)
+    {
+        return overhead < TimeSpan.Zero ? TimeSpan.Zero : overhead;
     }
 }

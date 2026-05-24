@@ -13,6 +13,7 @@ public interface IFrameScheduler : IFrameResultReceiver
     Task WaitForAllAsync();
     IReadOnlyList<FractalResult> GetOrderedResults();
     IReadOnlyList<FractalResult> DrainOrderedResults();
+    RenderTimingSummary GetTimingSummary();
     string GetTimingReport();
     void Cancel();
 
