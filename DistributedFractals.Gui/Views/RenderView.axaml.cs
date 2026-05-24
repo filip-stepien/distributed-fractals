@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using DistributedFractals.Orchestration.Schedulers;
 
 namespace DistributedFractals.Gui.Views;
 
@@ -27,6 +28,7 @@ public partial class RenderView : UserControl
     private int _framesInFlight;
     private int _framesFailed;
     private bool _renderCompleted;
+    private RenderTimingSummary? _timingSummary;
 
     public RenderView(bool isServerMode, int totalFrames)
     {
@@ -130,6 +132,11 @@ public partial class RenderView : UserControl
 
         var dialog = new RenderCompletionDialog(BuildCompletionReport(outputPath));
         await dialog.ShowDialog(owner);
+    }
+
+    public void OnTimingSummary(RenderTimingSummary summary)
+    {
+        _timingSummary = summary;
     }
 
     public void OnRenderFailed(string message)
@@ -389,15 +396,21 @@ public partial class RenderView : UserControl
     {
         return new RenderCompletionReport(
             OutputPath: outputPath,
-            FramesDone: _framesDone,
-            TotalFrames: _totalFrames,
-            FailedFrames: _framesFailed,
-            Clients: _cards.Values
-                .Select(card => new RenderCompletionClientReport(
-                    Name: card.Title,
-                    Status: card.StatusLabel.Text ?? "-",
-                    FramesDone: card.FramesDone,
-                    FailedFrames: card.FramesFailed))
+            RenderElapsed: _timingSummary?.RenderElapsed,
+            AverageBatchRender: _timingSummary?.AverageBatchRender,
+            AverageBatchCommunication: _timingSummary?.AverageBatchCommunication,
+            Clients: _cards
+                .Select(kv =>
+                {
+                    ClientCard card = kv.Value;
+                    ClientTimingSummary? timing = _timingSummary?.Clients
+                        .FirstOrDefault(timing => timing.Client.Id.ToString() == kv.Key);
+
+                    return new RenderCompletionClientReport(
+                        Name: card.Title,
+                        AverageBatchRender: timing?.AverageBatchRender,
+                        AverageBatchCommunication: timing?.AverageBatchCommunication);
+                })
                 .ToList());
     }
 }

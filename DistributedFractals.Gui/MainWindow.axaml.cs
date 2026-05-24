@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using DistributedFractals.Gui.Rendering;
 using DistributedFractals.Gui.Views;
 using DistributedFractals.Logging;
+using DistributedFractals.Orchestration.Schedulers;
 using DistributedFractals.Sessions;
 using DistributedFractals.Server.Core;
 
@@ -23,6 +24,7 @@ public partial class MainWindow : Window
     private Action<ClientIdentifier, int>? _renderFrameFailed;
     private Action<ClientIdentifier>? _renderClientConnected;
     private Action<ClientIdentifier>? _renderClientDisconnected;
+    private Action<RenderTimingSummary>? _renderTimingSummaryReady;
     private Action? _renderCompleted;
     private Action<Exception>? _renderFailed;
 
@@ -282,6 +284,8 @@ public partial class MainWindow : Window
             Dispatcher.UIThread.Post(() => view.OnFrameCompleted(client.Id.ToString(), frameIndex, duration));
         _renderFrameFailed = (client, frameIndex) =>
             Dispatcher.UIThread.Post(() => view.OnFrameFailed(client.Id.ToString(), frameIndex));
+        _renderTimingSummaryReady = summary =>
+            Dispatcher.UIThread.Post(() => view.OnTimingSummary(summary));
         _renderCompleted = () => Dispatcher.UIThread.Post(() =>
         {
             view.OnRenderCompleted(settings.OutputPath);
@@ -299,6 +303,7 @@ public partial class MainWindow : Window
         _serverSession.FrameDispatched += _renderFrameDispatched;
         _serverSession.FrameCompleted += _renderFrameCompleted;
         _serverSession.FrameFailed += _renderFrameFailed;
+        _serverSession.TimingSummaryReady += _renderTimingSummaryReady;
         _serverSession.RenderCompleted += _renderCompleted;
         _serverSession.RenderFailed += _renderFailed;
     }
@@ -335,6 +340,11 @@ public partial class MainWindow : Window
             _serverSession.FrameFailed -= _renderFrameFailed;
         }
 
+        if (_renderTimingSummaryReady is not null)
+        {
+            _serverSession.TimingSummaryReady -= _renderTimingSummaryReady;
+        }
+
         if (_renderCompleted is not null)
         {
             _serverSession.RenderCompleted -= _renderCompleted;
@@ -350,6 +360,7 @@ public partial class MainWindow : Window
         _renderFrameDispatched = null;
         _renderFrameCompleted = null;
         _renderFrameFailed = null;
+        _renderTimingSummaryReady = null;
         _renderCompleted = null;
         _renderFailed = null;
     }

@@ -23,6 +23,7 @@ public sealed class ServerSession : IServerSession, IFrameResultReceiver
     public event Action<ClientIdentifier, int, TimeSpan>? FrameCompleted;
     public event Action<ClientIdentifier, int>? FrameFailed;
     public event Action<string>? TimingReportReady;
+    public event Action<RenderTimingSummary>? TimingSummaryReady;
     public event Action? RenderCompleted;
     public event Action<Exception>? RenderFailed;
 
@@ -94,6 +95,7 @@ public sealed class ServerSession : IServerSession, IFrameResultReceiver
         try
         {
             await scheduler.WaitForAllAsync();
+            TimingSummaryReady?.Invoke(scheduler.GetTimingSummary());
             TimingReportReady?.Invoke($"Render wall-clock time: {scheduler.RenderElapsed.TotalSeconds:F3}s");
             TimingReportReady?.Invoke(scheduler.GetTimingReport());
             await SaveAsync(scheduler, settings.OutputPath, settings.Fps, settings.OutputFormat);
