@@ -5,65 +5,24 @@
         Width="1280" Height="800"
         MinWidth="900" MinHeight="600"
         Background="{StaticResource AppBgBrush}">
-    <Grid x:Name="RootGrid" RowDefinitions="*,0,0">
-        <Grid x:Name="ContentGrid" Grid.Row="0" ColumnDefinitions="*,0,0">
-            <ContentControl x:Name="ContentArea" Grid.Column="0" />
-            <GridSplitter x:Name="ClientsSplitter"
-                          Grid.Column="1"
-                          ResizeDirection="Columns"
-                          Background="{StaticResource AppBorderBrush}"
-                          HorizontalAlignment="Stretch"
-                          IsVisible="False"
-                          Cursor="SizeWestEast" />
-            <Border Grid.Column="2"
-                    x:Name="ClientsSidebarBorder"
-                    IsVisible="False"
-                    BorderBrush="{StaticResource AppBorderBrush}"
-                    BorderThickness="0,0,0,0">
-                <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                              VerticalScrollBarVisibility="Disabled">
-                    <ContentControl x:Name="ClientsSidebarContent" MinWidth="140" />
-                </ScrollViewer>
-            </Border>
-        </Grid>
-        <GridSplitter x:Name="ConsoleSplitter"
-                      Grid.Row="1"
-                      ResizeDirection="Rows"
+    <Grid x:Name="ContentGrid" ColumnDefinitions="*,0,0">
+        <ContentControl x:Name="ContentArea" Grid.Column="0" />
+        <GridSplitter x:Name="ClientsSplitter"
+                      Grid.Column="1"
+                      ResizeDirection="Columns"
                       Background="{StaticResource AppBorderBrush}"
-                      VerticalAlignment="Stretch"
+                      HorizontalAlignment="Stretch"
                       IsVisible="False"
-                      Cursor="SizeNorthSouth" />
-        <Border Grid.Row="2"
-                x:Name="ConsoleBorder"
-                Background="{StaticResource AppSurfaceBrush}"
+                      Cursor="SizeWestEast" />
+        <Border Grid.Column="2"
+                x:Name="ClientsSidebarBorder"
+                IsVisible="False"
                 BorderBrush="{StaticResource AppBorderBrush}"
-                BorderThickness="0,0,0,0"
-                IsVisible="False">
-            <Grid RowDefinitions="34,*">
-                <Border Grid.Row="0" Margin="12,0">
-                    <TextBlock Text="Console"
-                               FontSize="12" FontWeight="SemiBold"
-                               Foreground="{StaticResource AppTextMutedBrush}"
-                               VerticalAlignment="Center" />
-                </Border>
-                <Border x:Name="LogContent"
-                        Grid.Row="1"
-                        BorderBrush="{StaticResource AppBorderBrush}"
-                        BorderThickness="0,1,0,0">
-                    <TextBox x:Name="LogTextBox"
-                             IsReadOnly="True"
-                             TextWrapping="NoWrap"
-                             AcceptsReturn="True"
-                             FontFamily="Consolas,Courier New,monospace"
-                             FontSize="12"
-                             Foreground="{StaticResource AppTextBrush}"
-                             Background="{StaticResource AppBgBrush}"
-                             BorderThickness="0"
-                             VerticalContentAlignment="Top"
-                             Padding="12,8" />
-                </Border>
-            </Grid>
+                BorderThickness="0,0,0,0">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled">
+                <ContentControl x:Name="ClientsSidebarContent" MinWidth="140" />
+            </ScrollViewer>
         </Border>
-
     </Grid>
 </Window>

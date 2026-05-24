@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using DistributedFractals.Gui.Rendering;
-using DistributedFractals.Gui.Services;
 using DistributedFractals.Gui.Views;
 using DistributedFractals.Logging;
 using DistributedFractals.Sessions;
@@ -28,18 +26,14 @@ public partial class MainWindow : Window
     private Action<string>? _renderTimingReportReady;
     private Action? _renderCompleted;
     private Action<Exception>? _renderFailed;
-    private static readonly bool LoggingEnabled = false;
-    private const int MaxLogLines = 200;
-    private readonly Queue<string> _logLines = new();
 
     public MainWindow()
     {
         InitializeComponent();
-        Logger.Initialize(LoggingEnabled ? new GuiLogger(Log) : NullLogger.Instance);
+        Logger.Initialize(NullLogger.Instance);
 
         ClientsSidebarContent.Content = ClientsPanel;
         ContentArea.Content = new ConnectView();
-        ConsoleBorder.IsVisible = false;
     }
 
     public void NavigateToMain(
@@ -50,8 +44,6 @@ public partial class MainWindow : Window
         string displayName = "",
         TransportProtocol protocol = TransportProtocol.Tcp)
     {
-        SetConsoleVisible(true);
-
         if (isServerMode)
         {
             StartServerView(address, port, timeoutOrHeartbeatSeconds, protocol);
@@ -66,7 +58,6 @@ public partial class MainWindow : Window
         CancelRender();
         CleanupCurrentView();
         SetSidebarVisible(false);
-        SetConsoleVisible(false);
 
         if (_serverSession is not null)
         {
@@ -100,7 +91,6 @@ public partial class MainWindow : Window
 
     public void NavigateToMain(bool isServerMode)
     {
-        SetConsoleVisible(true);
         CleanupCurrentView();
 
         if (isServerMode)
@@ -117,7 +107,6 @@ public partial class MainWindow : Window
     public RenderView NavigateToRender(bool isServerMode, RenderSettings settings)
     {
         var view = new RenderView(isServerMode, settings.TotalFrames);
-        SetConsoleVisible(true);
         CleanupCurrentView();
         ContentArea.Content = view;
 
@@ -152,26 +141,6 @@ public partial class MainWindow : Window
 
     public void Log(string message)
     {
-        if (!LoggingEnabled)
-        {
-            return;
-        }
-
-        if (!Dispatcher.UIThread.CheckAccess())
-        {
-            Dispatcher.UIThread.Post(() => Log(message));
-            return;
-        }
-
-        string line = $"[{DateTime.Now:HH:mm:ss}] {message}";
-        _logLines.Enqueue(line);
-        while (_logLines.Count > MaxLogLines)
-        {
-            _logLines.Dequeue();
-        }
-
-        LogTextBox.Text = string.Join(Environment.NewLine, _logLines);
-        LogTextBox.CaretIndex = LogTextBox.Text.Length;
     }
 
     private void StartServerView(string address, int port, int timeoutSeconds, TransportProtocol protocol)
@@ -314,11 +283,10 @@ public partial class MainWindow : Window
             Dispatcher.UIThread.Post(() => view.OnFrameCompleted(client.Id.ToString(), frameIndex, duration));
         _renderFrameFailed = (client, frameIndex) =>
             Dispatcher.UIThread.Post(() => view.OnFrameFailed(client.Id.ToString(), frameIndex));
-        _renderTimingReportReady = report => Dispatcher.UIThread.Post(() => Log(report));
+        _renderTimingReportReady = report => Dispatcher.UIThread.Post(() => view.OnTimingReport(report));
         _renderCompleted = () => Dispatcher.UIThread.Post(() =>
         {
-            view.OnRenderCompleted();
-            Log($"Render complete. Output saved: {settings.OutputPath}");
+            view.OnRenderCompleted(settings.OutputPath);
             ClearRenderBindings();
         });
         _renderFailed = ex => Dispatcher.UIThread.Post(() =>
@@ -411,14 +379,6 @@ public partial class MainWindow : Window
                 clientView.Cleanup();
                 break;
         }
-    }
-
-    private void SetConsoleVisible(bool visible)
-    {
-        ConsoleBorder.IsVisible = visible;
-        ConsoleSplitter.IsVisible = visible;
-        RootGrid.RowDefinitions[1].Height = visible ? new GridLength(5) : new GridLength(0);
-        RootGrid.RowDefinitions[2].Height = visible ? new GridLength(150) : new GridLength(0);
     }
 
     private void SetSidebarVisible(bool visible)

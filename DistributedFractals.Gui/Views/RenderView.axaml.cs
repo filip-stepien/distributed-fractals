@@ -13,6 +13,7 @@ public partial class RenderView : UserControl
     private readonly bool _isServerMode;
     private readonly int _totalFrames;
     private readonly Dictionary<string, ClientCard> _cards = new();
+    private readonly List<string> _timingReports = new();
 
     private static readonly Color AccentColor = Color.FromRgb(0x4A, 0x9E, 0xFF);
     private static readonly Color GreenColor = Color.FromRgb(0x22, 0xC5, 0x5E);
@@ -49,7 +50,6 @@ public partial class RenderView : UserControl
         SetCardConnected(card, true);
         _cards[clientId] = card;
         ClientCardsPanel.Children.Add(card.CardBorder);
-        Log($"Client {title} ({address}) connected.");
     }
 
     public void OnClientDisconnected(string clientId)
@@ -61,7 +61,6 @@ public partial class RenderView : UserControl
 
         SetCardConnected(card, false);
         card.CurrentInfo.Foreground = new SolidColorBrush(MutedColor);
-        Log($"Client {clientId} disconnected.");
     }
 
     public void OnFrameDispatched(string clientId, int frameIndex)
@@ -118,9 +117,18 @@ public partial class RenderView : UserControl
         card.CurrentInfo.Text = $"{frameIndex} failed";
     }
 
-    public void OnRenderCompleted()
+    public void OnTimingReport(string report)
+    {
+        if (!string.IsNullOrWhiteSpace(report))
+        {
+            _timingReports.Add(report);
+        }
+    }
+
+    public void OnRenderCompleted(string outputPath)
     {
         MarkFinished();
+        ShowReport(outputPath);
     }
 
     public void OnRenderFailed(string message)
@@ -130,7 +138,6 @@ public partial class RenderView : UserControl
         ProgressStatusText.Foreground = new SolidColorBrush(RedColor);
         OverallProgress.Foreground = new SolidColorBrush(RedColor);
         CancelButton.IsEnabled = false;
-        Log(message);
     }
 
     private sealed class ClientCard
@@ -363,11 +370,24 @@ public partial class RenderView : UserControl
         ProgressStatusText.Foreground = new SolidColorBrush(RedColor);
         OverallProgress.Foreground = new SolidColorBrush(RedColor);
         CancelButton.IsEnabled = false;
-        Log("Render cancelled.");
     }
 
-    private void Log(string message)
+    private void ShowReport(string outputPath)
     {
-        (VisualRoot as MainWindow)?.Log(message);
+        ClientCardsScroll.IsVisible = false;
+        ReportPanel.IsVisible = true;
+
+        ReportOutputPathText.Text = $"Saved to {outputPath}";
+        ReportFramesText.Text = $"{_framesDone} / {_totalFrames}";
+        ReportClientsText.Text = _cards.Count.ToString();
+        ReportFailedText.Text = _framesFailed.ToString();
+
+        if (_timingReports.Count == 0)
+        {
+            ReportDetailsText.Text = "No timing details were reported.";
+            return;
+        }
+
+        ReportDetailsText.Text = string.Join(Environment.NewLine + Environment.NewLine, _timingReports);
     }
 }

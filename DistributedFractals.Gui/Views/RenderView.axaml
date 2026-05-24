@@ -22,11 +22,83 @@
                 </StackPanel>
             </Grid>
         </Border>
-        <ScrollViewer Grid.Row="1"
-                      HorizontalScrollBarVisibility="Disabled"
-                      VerticalScrollBarVisibility="Auto">
-            <WrapPanel x:Name="ClientCardsPanel" Margin="12" />
-        </ScrollViewer>
+        <Grid Grid.Row="1">
+            <ScrollViewer x:Name="ClientCardsScroll"
+                          HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Auto">
+                <WrapPanel x:Name="ClientCardsPanel" Margin="12" />
+            </ScrollViewer>
+
+            <Border x:Name="ReportPanel"
+                    IsVisible="False"
+                    Padding="28"
+                    Background="{StaticResource AppBgBrush}">
+                <Grid MaxWidth="860"
+                      HorizontalAlignment="Center"
+                      RowDefinitions="Auto,Auto,Auto,*">
+                    <StackPanel Grid.Row="0" Spacing="8">
+                        <TextBlock Text="Render complete"
+                                   FontSize="26"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource AppTextBrush}" />
+                        <TextBlock x:Name="ReportOutputPathText"
+                                   FontSize="13"
+                                   Foreground="{StaticResource AppTextMutedBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <Grid Grid.Row="1"
+                          Margin="0,28,0,0"
+                          ColumnDefinitions="*,*,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="FRAMES"
+                                       FontSize="10"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource AppTextMutedBrush}" />
+                            <TextBlock x:Name="ReportFramesText"
+                                       FontSize="24"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource AppTextBrush}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock Text="CLIENTS"
+                                       FontSize="10"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource AppTextMutedBrush}" />
+                            <TextBlock x:Name="ReportClientsText"
+                                       FontSize="24"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource AppTextBrush}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="FAILED"
+                                       FontSize="10"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource AppTextMutedBrush}" />
+                            <TextBlock x:Name="ReportFailedText"
+                                       FontSize="24"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource AppTextBrush}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="2"
+                            Height="1"
+                            Margin="0,24,0,18"
+                            Background="{StaticResource AppBorderBrush}" />
+
+                    <ScrollViewer Grid.Row="3"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Auto">
+                        <TextBlock x:Name="ReportDetailsText"
+                                   FontFamily="Consolas,Courier New,monospace"
+                                   FontSize="12"
+                                   Foreground="{StaticResource AppTextBrush}"
+                                   TextWrapping="NoWrap" />
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
         <Border Grid.Row="2"
                 Background="{StaticResource AppSurfaceBrush}"
                 BorderBrush="{StaticResource AppBorderBrush}"
@@ -34,37 +106,37 @@
                 Padding="16,10">
             <ScrollViewer HorizontalScrollBarVisibility="Auto"
                           VerticalScrollBarVisibility="Disabled">
-            <Grid ColumnDefinitions="Auto,*,Auto,12,Auto">
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <Ellipse x:Name="ProgressDot" Width="10" Height="10"
-                             Fill="{StaticResource AppAccentBrush}" />
-                    <TextBlock x:Name="ProgressStatusText" Text="Rendering..."
-                               FontSize="13" FontWeight="SemiBold"
-                               Foreground="{StaticResource AppTextBrush}"
+                <Grid ColumnDefinitions="Auto,*,Auto,12,Auto">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Ellipse x:Name="ProgressDot" Width="10" Height="10"
+                                 Fill="{StaticResource AppAccentBrush}" />
+                        <TextBlock x:Name="ProgressStatusText" Text="Rendering..."
+                                   FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{StaticResource AppTextBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <ProgressBar x:Name="OverallProgress"
+                                 Grid.Column="1"
+                                 Minimum="0" Value="0"
+                                 Height="6"
+                                 Margin="16,0"
+                                 VerticalAlignment="Center" />
+
+                    <TextBlock x:Name="ProgressText"
+                               Grid.Column="2"
+                               FontSize="13"
+                               Foreground="{StaticResource AppTextMutedBrush}"
                                VerticalAlignment="Center" />
-                </StackPanel>
 
-                <ProgressBar x:Name="OverallProgress"
-                             Grid.Column="1"
-                             Minimum="0" Value="0"
-                             Height="6"
-                             Margin="16,0"
-                             VerticalAlignment="Center" />
-
-                <TextBlock x:Name="ProgressText"
-                           Grid.Column="2"
-                           FontSize="13"
-                           Foreground="{StaticResource AppTextMutedBrush}"
-                           VerticalAlignment="Center" />
-
-                <Button Grid.Column="4"
-                        x:Name="CancelButton"
-                        Content="Cancel"
-                        Classes="danger"
-                        Padding="16,6"
-                        FontSize="13"
-                        Click="OnCancelClick" />
-            </Grid>
+                    <Button Grid.Column="4"
+                            x:Name="CancelButton"
+                            Content="Cancel"
+                            Classes="danger"
+                            Padding="16,6"
+                            FontSize="13"
+                            Click="OnCancelClick" />
+                </Grid>
             </ScrollViewer>
         </Border>
 
