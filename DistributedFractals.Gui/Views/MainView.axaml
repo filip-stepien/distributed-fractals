@@ -86,10 +86,10 @@
                                 <ComboBox x:Name="ColorizerCombo"
                                           HorizontalAlignment="Stretch"
                                           SelectedIndex="0">
-                                    <ComboBoxItem Content="Black &amp; White" />
                                     <ComboBoxItem Content="Cycling HSV" />
                                 </ComboBox>
                             </StackPanel>
+
                         </StackPanel>
                         <Border Height="1" Background="{StaticResource AppBorderBrush}" />
                         <StackPanel Spacing="12">

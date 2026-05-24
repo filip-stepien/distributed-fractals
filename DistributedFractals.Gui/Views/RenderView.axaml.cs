@@ -145,7 +145,6 @@ public partial class RenderView : UserControl
         ProgressStatusText.Text = "Failed";
         ProgressStatusText.Foreground = new SolidColorBrush(RedColor);
         OverallProgress.Foreground = new SolidColorBrush(RedColor);
-        CancelButton.IsEnabled = false;
     }
 
     private sealed class ClientCard
@@ -318,7 +317,6 @@ public partial class RenderView : UserControl
         ProgressStatusText.Text = "Complete";
         ProgressStatusText.Foreground = new SolidColorBrush(GreenColor);
         OverallProgress.Foreground = new SolidColorBrush(GreenColor);
-        CancelButton.IsEnabled = false;
     }
 
     private async void OnBackClick(object? sender, RoutedEventArgs e)
@@ -357,39 +355,6 @@ public partial class RenderView : UserControl
             window.CancelRender();
             window.NavigateToMain(_isServerMode);
         }
-    }
-
-    private async void OnCancelClick(object? sender, RoutedEventArgs e)
-    {
-        var dialog = new ConfirmDialog(
-            "Cancel render?",
-            "This will stop the current render. This cannot be undone.",
-            "Cancel render",
-            "Keep rendering",
-            danger: true,
-            windowTitle: "Warning"
-        );
-        if (TopLevel.GetTopLevel(this) is not Window owner)
-        {
-            return;
-        }
-
-        var result = await dialog.ShowDialog<bool?>(owner);
-        if (result is not true)
-        {
-            return;
-        }
-
-        if (VisualRoot is MainWindow window)
-        {
-            window.CancelRender();
-        }
-
-        ProgressDot.Fill = new SolidColorBrush(RedColor);
-        ProgressStatusText.Text = "Cancelled";
-        ProgressStatusText.Foreground = new SolidColorBrush(RedColor);
-        OverallProgress.Foreground = new SolidColorBrush(RedColor);
-        CancelButton.IsEnabled = false;
     }
 
     private RenderCompletionReport BuildCompletionReport(string outputPath)

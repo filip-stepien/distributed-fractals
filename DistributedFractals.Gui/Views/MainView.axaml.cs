@@ -66,7 +66,10 @@ public partial class MainView : UserControl
         FractalImage.Source = null;
     }
 
-
+    private FractalColorizerType GetSelectedColorizer() => ColorizerCombo.SelectedIndex switch
+    {
+        _ => FractalColorizerType.CyclingHsv
+    };
 
     private Task GeneratePreviewForKeyframeAsync(ZoomKeyframe kf)
     {
@@ -102,11 +105,10 @@ public partial class MainView : UserControl
             _previewOptions = overrideOptions ?? BuildBaseOptions(width, height, maxIter);
             _previewBounds = overrideBounds ?? BuildDefaultBounds(width, height);
 
-            FractalColorizerType colorizerType = ColorizerCombo.SelectedIndex == 0
-                ? FractalColorizerType.BlackAndWhite
-                : FractalColorizerType.CyclingHsv;
-
-            FractalResult result = await FrameRenderer.RenderAsync(_previewOptions, _previewBounds, colorizerType);
+            FractalResult result = await FrameRenderer.RenderAsync(
+                _previewOptions,
+                _previewBounds,
+                GetSelectedColorizer());
             var bitmap = FractalResultBitmap.From(result);
             FractalImage.Source = bitmap;
             RenderOverlay.IsVisible = false;
@@ -516,10 +518,6 @@ public partial class MainView : UserControl
 
         ulong maxIter = (ulong)(MaxIterationsInput.Value ?? 500);
         var baseOptions = BuildBaseOptions(width, height, maxIter);
-        var colorizerType = ColorizerCombo.SelectedIndex == 0
-            ? FractalColorizerType.BlackAndWhite
-            : FractalColorizerType.CyclingHsv;
-
         int framesPerBatch = (int)(FramesPerBatchInput.Value ?? 1);
         int maxBatchesPerClient = (int)(MaxBatchesPerClientInput.Value ?? 1);
         ZoomInterpolationType interpolation = InterpolationCombo.SelectedIndex == 0
@@ -529,7 +527,7 @@ public partial class MainView : UserControl
         var settings = new RenderSettings(
             Keyframes: _keyframes.ToList(),
             Options: baseOptions,
-            Colorizer: colorizerType,
+            Colorizer: GetSelectedColorizer(),
             TotalFrames: totalFrames,
             Fps: fps,
             Interpolation: interpolation,

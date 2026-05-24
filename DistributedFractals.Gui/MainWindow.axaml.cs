@@ -18,6 +18,7 @@ public partial class MainWindow : Window
 
     private IServerSession? _serverSession;
     private IClientSession? _clientSession;
+    private MainView? _serverMainView;
 
     private Action<ClientIdentifier, int>? _renderFrameDispatched;
     private Action<ClientIdentifier, int, TimeSpan>? _renderFrameCompleted;
@@ -87,6 +88,7 @@ public partial class MainWindow : Window
         }
 
         ClientsPanel.Reset();
+        _serverMainView = null;
         ContentArea.Content = new ConnectView();
     }
 
@@ -97,7 +99,8 @@ public partial class MainWindow : Window
         if (isServerMode)
         {
             SetSidebarVisible(true);
-            ContentArea.Content = new MainView(isServerMode: true);
+            _serverMainView ??= new MainView(isServerMode: true);
+            ContentArea.Content = _serverMainView;
             return;
         }
 
@@ -108,7 +111,15 @@ public partial class MainWindow : Window
     public RenderView NavigateToRender(bool isServerMode, RenderSettings settings)
     {
         var view = new RenderView(isServerMode, settings.TotalFrames);
-        CleanupCurrentView();
+        if (isServerMode && ContentArea.Content is MainView mainView)
+        {
+            _serverMainView = mainView;
+        }
+        else
+        {
+            CleanupCurrentView();
+        }
+
         ContentArea.Content = view;
 
         if (_serverSession is null)
@@ -149,7 +160,8 @@ public partial class MainWindow : Window
         SetSidebarVisible(true);
         CleanupCurrentView();
         ClientsPanel.Reset();
-        ContentArea.Content = new MainView(isServerMode: true);
+        _serverMainView = new MainView(isServerMode: true);
+        ContentArea.Content = _serverMainView;
 
         _serverSession = new ServerSession();
         _serverSession.ClientConnected += OnServerClientConnected;
